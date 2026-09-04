@@ -180,12 +180,35 @@ app.get('/equipo/:id', (req, res) => {
   const equipo = q.listEquipos().find((e) => e.id === id);
   res.render('equipo', {
     equipo,
-    herramientas: q.listHerramientas(),
+    herramientas: q.catalogoVisiblePorEquipo(id),
     compradas: q.listComprasPorEquipo(id),
     categorias: CATEGORIAS,
     sesion: sesionMod.getSesionPublica(),
     pista: pistas.getPistaConMensaje(id),
   });
+});
+
+// SPEC8.md: el catálogo visible para un equipo se filtra server-side por lo que ya
+// desbloqueó (no alcanza con ocultarlo en el cliente). Punto de extensión "no documentado"
+// de SPEC9.md, a propósito confinado a este handler — ni el HTML ni el JS servidos al
+// navegador mencionan `completo` ni `secreto` en ningún lado; quien lo encuentra, lo
+// encuentra mirando la pestaña de Red, no leyendo la interfaz.
+app.get('/api/equipos/:id/catalogo', (req, res) => {
+  const id = Number(req.params.id);
+  const equipo = q.getEquipo(id);
+  if (!equipo) {
+    res.status(404).json({ error: 'Equipo no encontrado.' });
+    return;
+  }
+  if (req.query.completo === '1') {
+    res.json({
+      catalogo: q.listHerramientas(),
+      secreto:
+        "Vale por 20 unidades extra de presupuesto. Andá a buscar al profesor y decile la palabra clave: '¿qué se hace en un momento de tanta incertidumbre? ¿acaso debemos jugar al Mario Bros?'",
+    });
+    return;
+  }
+  res.json({ catalogo: q.catalogoVisiblePorEquipo(id) });
 });
 
 app.post('/api/equipos/:id/comprar', (req, res) => {

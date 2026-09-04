@@ -7,15 +7,15 @@
   const bannerRonda = document.getElementById('banner-ronda');
   const tarjetaPista = document.getElementById('tarjeta-pista');
   const toastContenedor = document.getElementById('toast-resultado');
+  const catalogoEl = document.getElementById('catalogo');
 
   const inicial = JSON.parse(document.getElementById('equipo-inicial').textContent);
-  const herramientasInfo = JSON.parse(document.getElementById('herramientas-info').textContent);
-  const herramientasPorId = new Map(herramientasInfo.map((h) => [h.id, h]));
   const categoriasInfo = JSON.parse(document.getElementById('categorias-info').textContent);
   const equipoId = inicial.id;
 
   let estadoActual = inicial;
   let sesionActual = JSON.parse(document.getElementById('sesion-inicial').textContent);
+  let catalogoPorId = new Map();
 
   socket.emit('equipo:unirse', equipoId);
 
@@ -48,8 +48,11 @@
     return sesion.rondaDuracionSeg - transcurrido;
   }
 
-  function tieneCategoria(equipo, categoria) {
-    return herramientasInfo.some((h) => h.categoria === categoria && equipo.herramientas.includes(h.id));
+  // Cubre Preventiva desde nivel 2 en adelante (SPEC8.md) — nivel 1 solo no alcanza.
+  function tieneCategoriaCubierta(equipo, categoria) {
+    return [...catalogoPorId.values()].some(
+      (h) => h.categoria === categoria && ['2', '3-A', '3-B'].includes(h.nivel) && equipo.herramientas.includes(h.id)
+    );
   }
 
   function renderBannerRonda() {
@@ -79,7 +82,7 @@
       return;
     }
 
-    const cubierto = tieneCategoria(equipo, caso.categoria);
+    const cubierto = tieneCategoriaCubierta(equipo, caso.categoria);
     const yaReacciono = equipo.reaccionoEstaRonda;
 
     let accionHtml;
@@ -149,26 +152,24 @@
     setTimeout(() => div.remove(), 6000);
   }
 
-  function renderEstado(equipo) {
-    estadoActual = equipo;
-    valorPresupuesto.textContent = equipo.presupuesto;
-    valorReputacion.textContent = equipo.reputacion;
-
+  function renderListaCompradas(equipo) {
     if (equipo.herramientas.length === 0) {
       listaCompradas.innerHTML = '<span>Todavía no utilizaron nada.</span>';
-    } else {
-      listaCompradas.innerHTML = equipo.herramientas
-        .map((hid) => {
-          const info = herramientasPorId.get(hid);
-          return `<span>${info ? escapeHtml(info.nombre) : hid}</span>`;
-        })
-        .join('');
+      return;
     }
+    listaCompradas.innerHTML = equipo.herramientas
+      .map((hid) => {
+        const info = catalogoPorId.get(hid);
+        return `<span>${info ? escapeHtml(info.nombre) : hid}</span>`;
+      })
+      .join('');
+  }
 
+  function aplicarEstadoBotones() {
+    const equipo = estadoActual;
     document.querySelectorAll('.herramienta-card').forEach((card) => {
       const id = card.dataset.id;
       const costo = Number(card.dataset.costo);
-      const requiere = card.dataset.requiere || null;
       const btn = card.querySelector('.btn-utilizar');
 
       if (sesionActual.rondaEstado !== 'activa') {
@@ -177,10 +178,6 @@
       } else if (equipo.herramientas.includes(id)) {
         btn.disabled = true;
         btn.textContent = 'Ya la estás utilizando';
-      } else if (requiere && !equipo.herramientas.includes(requiere)) {
-        const info = herramientasPorId.get(requiere);
-        btn.disabled = true;
-        btn.textContent = `Primero necesitás ${info ? info.nombre : requiere}`;
       } else if (equipo.presupuesto < costo) {
         btn.disabled = true;
         btn.textContent = 'Presupuesto insuficiente';
@@ -189,11 +186,69 @@
         btn.textContent = `Utilizar (${costo})`;
       }
     });
-
-    renderBannerRonda();
   }
 
-  document.addEventListener('click', async (e) => {
+  // El catálogo que llega acá ya viene filtrado por el servidor (SPEC8.md): una carta de
+  // nivel 2/3 sin desbloquear directamente no está en esta lista, no solo deshabilitada.
+  function renderCatalogo(catalogo) {
+    catalogoPorId = new Map(catalogo.map((h) => [h.id, h]));
+    const porCategoria = new Map();
+    for (const h of catalogo) {
+      if (!porCategoria.has(h.categoria)) porCategoria.set(h.categoria, []);
+      porCategoria.get(h.categoria).push(h);
+    }
+
+    catalogoEl.innerHTML = '';
+    for (const [slug, cat] of Object.entries(categoriasInfo)) {
+      const items = porCategoria.get(slug);
+      if (!items || items.length === 0) continue;
+      const grupo = document.createElement('div');
+      grupo.className = 'categoria-grupo';
+      const cabecera = document.createElement('span');
+      cabecera.className = 'categoria-titulo';
+      cabecera.style.background = cat.fondo;
+      cabecera.style.color = cat.color;
+      cabecera.textContent = cat.nombre;
+      grupo.appendChild(cabecera);
+
+      for (const h of items) {
+        const card = document.createElement('div');
+        card.className = 'herramienta-card';
+        card.dataset.id = h.id;
+        card.dataset.costo = h.costo;
+        card.style.background = cat.fondo;
+        card.innerHTML = `
+          <div class="info">
+            <div class="nombre" style="color: ${cat.color};">${escapeHtml(h.nombre)}</div>
+            <div class="descripcion">${escapeHtml(h.descripcion)}</div>
+          </div>
+          <div class="costo">Costo: ${h.costo}</div>
+          <button class="btn-utilizar" type="button">Utilizar</button>
+        `;
+        grupo.appendChild(card);
+      }
+      catalogoEl.appendChild(grupo);
+    }
+
+    aplicarEstadoBotones();
+  }
+
+  async function refrescarCatalogo() {
+    const res = await fetch(`/api/equipos/${equipoId}/catalogo`);
+    const data = await res.json();
+    renderCatalogo(data.catalogo);
+  }
+
+  function renderEstado(equipo) {
+    estadoActual = equipo;
+    valorPresupuesto.textContent = equipo.presupuesto;
+    valorReputacion.textContent = equipo.reputacion;
+    renderListaCompradas(equipo);
+    renderBannerRonda();
+    refrescarCatalogo();
+  }
+
+  catalogoEl.addEventListener('click', async (e) => {
     if (!e.target.classList.contains('btn-utilizar') || e.target.disabled) return;
     const card = e.target.closest('.herramienta-card');
     const herramientaId = card.dataset.id;
@@ -207,7 +262,7 @@
     const data = await res.json();
     if (!res.ok) {
       mostrarMensaje(data.error || 'No se pudo utilizar.', 'error');
-      renderEstado(estadoActual);
+      aplicarEstadoBotones();
       return;
     }
     mostrarMensaje('Herramienta en uso.', 'exito');
@@ -233,5 +288,10 @@
   });
 
   renderPista(JSON.parse(document.getElementById('pista-inicial').textContent));
-  renderEstado(inicial);
+  renderCatalogo(JSON.parse(document.getElementById('catalogo-inicial').textContent));
+  estadoActual = inicial;
+  valorPresupuesto.textContent = inicial.presupuesto;
+  valorReputacion.textContent = inicial.reputacion;
+  renderListaCompradas(inicial);
+  renderBannerRonda();
 })();

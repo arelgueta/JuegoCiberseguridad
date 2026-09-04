@@ -33,34 +33,13 @@
     <div class="compradas-lista" id="lista-compradas"></div>
 
     <h2>Catálogo</h2>
-    <% Object.entries(categorias).forEach(([slug, cat]) => { %>
-      <% const items = herramientas.filter((h) => h.categoria === slug); %>
-      <% if (items.length) { %>
-        <div class="categoria-grupo">
-          <span class="categoria-titulo" style="background: <%= cat.fondo %>; color: <%= cat.color %>;">
-            <%= cat.nombre %>
-          </span>
-          <% items.forEach((h) => { %>
-            <div class="herramienta-card" data-id="<%= h.id %>" data-costo="<%= h.costo %>"
-                 data-categoria="<%= h.categoria %>" data-requiere="<%= h.requiere || '' %>"
-                 style="background: <%= cat.fondo %>;">
-              <div class="info">
-                <div class="nombre" style="color: <%= cat.color %>;"><%= h.nombre %></div>
-                <div class="descripcion"><%= h.descripcion %></div>
-              </div>
-              <div class="costo">Costo: <%= h.costo %></div>
-              <button class="btn-utilizar" type="button">Utilizar</button>
-            </div>
-          <% }) %>
-        </div>
-      <% } %>
-    <% }) %>
+    <div id="catalogo"></div>
   </main>
 
   <div id="toast-resultado" class="toast-contenedor"></div>
 
   <script id="equipo-inicial" type="application/json"><%- JSON.stringify({ id: equipo.id, presupuesto: equipo.presupuesto, reputacion: equipo.reputacion, herramientas: compradas, reaccionoEstaRonda: equipo.reaccionoEstaRonda }) %></script>
-  <script id="herramientas-info" type="application/json"><%- JSON.stringify(herramientas.map((h) => ({ id: h.id, nombre: h.nombre, costo: h.costo, categoria: h.categoria, requiere: h.requiere }))) %></script>
+  <script id="catalogo-inicial" type="application/json"><%- JSON.stringify(herramientas) %></script>
   <script id="sesion-inicial" type="application/json"><%- JSON.stringify(sesion) %></script>
   <script id="pista-inicial" type="application/json"><%- JSON.stringify(pista) %></script>
   <script id="categorias-info" type="application/json"><%- JSON.stringify(categorias) %></script>
