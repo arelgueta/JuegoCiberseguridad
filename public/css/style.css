@@ -235,3 +235,63 @@ form.formulario label {
   padding: 0.3rem 0.75rem;
   font-size: 0.85rem;
 }
+
+.panel-sesion {
+  margin-bottom: 1rem;
+}
+
+.tarjeta-sesion {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.tarjeta-sesion.activa {
+  border: 2px solid #111827;
+}
+
+.tarjeta-sesion.pendiente {
+  border: 2px solid #92400e;
+}
+
+.tarjeta-sesion.finalizada {
+  border: 2px solid #166534;
+}
+
+.titulo-ronda {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin: 0 0 0.5rem;
+}
+
+.cronometro {
+  font-size: 2.4rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.casos-preview {
+  margin-top: 0.75rem;
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+}
+
+.tabla-resumen {
+  margin: 0.75rem 0;
+}
+
+.tabla-resumen input[type="number"] {
+  width: 4.5rem;
+}
+
+.nota {
+  font-size: 0.8rem;
+  color: #666;
+  max-width: 32rem;
+}
+
+#btn-borrar-todo:disabled {
+  background: #cbd2d9;
+}

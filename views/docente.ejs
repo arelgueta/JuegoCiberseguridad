@@ -11,6 +11,9 @@
   <main>
     <div id="mensaje"></div>
 
+    <h2>Sesión</h2>
+    <div id="panel-sesion" class="panel-sesion"></div>
+
     <h2>Equipos</h2>
     <table id="tabla-equipos">
       <thead>
@@ -27,38 +30,22 @@
       <button type="submit">Crear equipo</button>
     </form>
 
-    <h2>Cargar resultado de caso</h2>
-    <form id="form-caso" class="formulario">
-      <label>Equipo
-        <select name="equipoId" id="select-equipo-caso" required></select>
+    <h2>Reiniciar</h2>
+    <div class="formulario">
+      <button id="btn-reset" class="peligro" type="button">Reiniciar partida</button>
+      <span class="nota">Mantiene los equipos, borra compras/casos y vuelve todo a 20/20. Distinto de reiniciar el contenedor Docker (que no borra nada).</span>
+    </div>
+    <div class="formulario">
+      <label>Escribí BORRAR para habilitar
+        <input type="text" id="input-confirmar-borrar" autocomplete="off">
       </label>
-      <label>Caso #
-        <input type="number" name="casoNumero" min="1" max="10" required>
-      </label>
-      <label>Ruta
-        <select name="ruta" required>
-          <option value="preventiva">Preventiva</option>
-          <option value="reactiva">Reactiva</option>
-          <option value="omision">Omisión</option>
-        </select>
-      </label>
-      <label>Δ Presupuesto
-        <input type="number" name="deltaPresupuesto" value="0" required>
-      </label>
-      <label>Δ Reputación
-        <input type="number" name="deltaReputacion" value="0" required>
-      </label>
-      <label>¿Vulnerable?
-        <input type="checkbox" name="vulnerable">
-      </label>
-      <button type="submit">Cargar caso</button>
-    </form>
-
-    <h2>Reiniciar simulación</h2>
-    <button id="btn-reset" class="peligro" type="button">Reiniciar todo</button>
+      <button id="btn-borrar-todo" class="peligro" type="button" disabled>Borrar todo (elimina los equipos)</button>
+    </div>
   </main>
 
   <script id="equipos-iniciales" type="application/json"><%- JSON.stringify(equipos) %></script>
+  <script id="sesion-inicial" type="application/json"><%- JSON.stringify(sesion) %></script>
+  <script id="casos-info" type="application/json"><%- JSON.stringify(casos) %></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/docente.js"></script>
 </body>

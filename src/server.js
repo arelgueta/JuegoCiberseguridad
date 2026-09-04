@@ -6,6 +6,7 @@ const { Server } = require('socket.io');
 const q = require('./queries');
 const sesionMod = require('./sesion');
 const pistas = require('./pistas');
+const { CASOS } = require('./db');
 const { CATEGORIAS } = require('./categorias');
 
 const PORT = process.env.PORT || 3000;
@@ -61,7 +62,11 @@ app.get('/salud', (req, res) => {
 });
 
 app.get('/docente', (req, res) => {
-  res.render('docente', { equipos: q.listEquipos(), sesion: sesionMod.getSesionDocente() });
+  res.render('docente', {
+    equipos: q.listEquipos(),
+    sesion: sesionMod.getSesionDocente(),
+    casos: CASOS,
+  });
 });
 
 app.get('/api/sesion', (req, res) => {
