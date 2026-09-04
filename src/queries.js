@@ -1,9 +1,15 @@
-const { db } = require('./db');
-
-const RUTAS_VALIDAS = new Set(['preventiva', 'reactiva', 'omision']);
+const { db, CATEGORIAS_AMENAZA } = require('./db');
+const sesion = require('./sesion');
+const pistas = require('./pistas');
 
 function puntaje(equipo) {
   return equipo.reputacion + equipo.presupuesto / 2;
+}
+
+function tieneAlgunaVulnerable(equipoId) {
+  return !!db
+    .prepare('SELECT 1 FROM vulnerabilidades WHERE equipo_id = ? AND vulnerable_desde_caso IS NOT NULL')
+    .get(equipoId);
 }
 
 function listEquipos() {
@@ -16,10 +22,13 @@ function listEquipos() {
     }
     herramientasPorEquipo.get(c.equipo_id).push(c.herramienta_id);
   }
+  const sesionRaw = sesion.getSesionRaw();
   return equipos.map((e) => ({
     ...e,
     puntaje: puntaje(e),
     herramientas: herramientasPorEquipo.get(e.id) || [],
+    vulnerable: tieneAlgunaVulnerable(e.id),
+    reaccionoEstaRonda: sesionRaw.ronda_numero >= 1 ? sesion.reacciono(e.id, sesionRaw.ronda_numero) : false,
   }));
 }
 
@@ -27,15 +36,25 @@ function getEquipo(id) {
   return db.prepare('SELECT * FROM equipos WHERE id = ?').get(id);
 }
 
+const crearEquipoTx = db.transaction((nombre) => {
+  const info = db.prepare('INSERT INTO equipos (nombre) VALUES (?)').run(nombre);
+  const equipoId = info.lastInsertRowid;
+  const seedVulnerabilidad = db.prepare(
+    'INSERT OR IGNORE INTO vulnerabilidades (equipo_id, categoria, vulnerable_desde_caso) VALUES (?, ?, NULL)'
+  );
+  for (const categoria of CATEGORIAS_AMENAZA) {
+    seedVulnerabilidad.run(equipoId, categoria);
+  }
+  return equipoId;
+});
+
 function crearEquipo(nombre) {
   const nombreLimpio = String(nombre || '').trim();
   if (!nombreLimpio) {
     throw new Error('El nombre del equipo no puede estar vacío.');
   }
-  const info = db
-    .prepare('INSERT INTO equipos (nombre) VALUES (?)')
-    .run(nombreLimpio);
-  return getEquipo(info.lastInsertRowid);
+  const equipoId = crearEquipoTx(nombreLimpio);
+  return getEquipo(equipoId);
 }
 
 function editarEquipo(id, { presupuesto, reputacion }) {
@@ -51,14 +70,32 @@ function editarEquipo(id, { presupuesto, reputacion }) {
   return getEquipo(id);
 }
 
-const resetSimulacionTx = db.transaction(() => {
+const reiniciarPartidaTx = db.transaction(() => {
   db.prepare('DELETE FROM compras').run();
   db.prepare('DELETE FROM registro_casos').run();
+  db.prepare('DELETE FROM reacciones').run();
+  db.prepare('DELETE FROM pistas_auditoria').run();
+  db.prepare('UPDATE vulnerabilidades SET vulnerable_desde_caso = NULL').run();
   db.prepare('UPDATE equipos SET presupuesto = 20, reputacion = 20').run();
+  sesion.reiniciarSesion();
 });
 
-function resetSimulacion() {
-  resetSimulacionTx();
+function reiniciarPartida() {
+  reiniciarPartidaTx();
+}
+
+const borrarTodoTx = db.transaction(() => {
+  db.prepare('DELETE FROM compras').run();
+  db.prepare('DELETE FROM registro_casos').run();
+  db.prepare('DELETE FROM reacciones').run();
+  db.prepare('DELETE FROM pistas_auditoria').run();
+  db.prepare('DELETE FROM vulnerabilidades').run();
+  db.prepare('DELETE FROM equipos').run();
+  sesion.reiniciarSesion();
+});
+
+function borrarTodo() {
+  borrarTodoTx();
 }
 
 function listHerramientas() {
@@ -76,7 +113,7 @@ function listComprasPorEquipo(equipoId) {
     .map((r) => r.herramienta_id);
 }
 
-const comprarHerramientaTx = db.transaction((equipoId, herramientaId) => {
+const usarHerramientaTx = db.transaction((equipoId, herramientaId) => {
   const equipo = getEquipo(equipoId);
   if (!equipo) {
     throw new Error('Equipo no encontrado.');
@@ -85,11 +122,23 @@ const comprarHerramientaTx = db.transaction((equipoId, herramientaId) => {
   if (!herramienta) {
     throw new Error('Herramienta no encontrada.');
   }
-  const yaComprada = db
+  if (herramienta.categoria === 'fundacion' && !sesion.puedeUsarFundacion()) {
+    throw new Error('Las cartas de Momento 0 solo se pueden utilizar durante esa ronda.');
+  }
+  if (herramienta.requiere) {
+    const tieneRequisito = db
+      .prepare('SELECT 1 FROM compras WHERE equipo_id = ? AND herramienta_id = ?')
+      .get(equipoId, herramienta.requiere);
+    if (!tieneRequisito) {
+      const requisito = getHerramienta(herramienta.requiere);
+      throw new Error(`Primero necesitás ${requisito ? requisito.nombre : herramienta.requiere}.`);
+    }
+  }
+  const yaUsada = db
     .prepare('SELECT 1 FROM compras WHERE equipo_id = ? AND herramienta_id = ?')
     .get(equipoId, herramientaId);
-  if (yaComprada) {
-    throw new Error('El equipo ya tiene esa herramienta.');
+  if (yaUsada) {
+    throw new Error('El equipo ya está utilizando esa herramienta.');
   }
   if (equipo.presupuesto < herramienta.costo) {
     throw new Error('Presupuesto insuficiente.');
@@ -104,55 +153,24 @@ const comprarHerramientaTx = db.transaction((equipoId, herramientaId) => {
   return getEquipo(equipoId);
 });
 
-function comprarHerramienta(equipoId, herramientaId) {
-  return comprarHerramientaTx(equipoId, herramientaId);
-}
-
-const cargarCasoTx = db.transaction((datos) => {
-  const {
-    equipoId,
-    casoNumero,
-    ruta,
-    deltaPresupuesto,
-    deltaReputacion,
-    vulnerable,
-  } = datos;
-
-  const equipo = getEquipo(equipoId);
-  if (!equipo) {
-    throw new Error('Equipo no encontrado.');
+function usarHerramienta(equipoId, herramientaId) {
+  const equipo = usarHerramientaTx(equipoId, herramientaId);
+  let pista = null;
+  if (herramientaId === 'programa-auditoria-interna') {
+    pista = pistas.generarPista(equipoId);
   }
-  if (!RUTAS_VALIDAS.has(ruta)) {
-    throw new Error('Ruta inválida.');
-  }
-
-  db.prepare(
-    `INSERT INTO registro_casos
-      (equipo_id, caso_numero, ruta, delta_presupuesto, delta_reputacion, vulnerable)
-     VALUES (?, ?, ?, ?, ?, ?)`
-  ).run(equipoId, casoNumero, ruta, deltaPresupuesto, deltaReputacion, vulnerable ? 1 : 0);
-
-  db.prepare(
-    'UPDATE equipos SET presupuesto = presupuesto + ?, reputacion = reputacion + ? WHERE id = ?'
-  ).run(deltaPresupuesto, deltaReputacion, equipoId);
-
-  return getEquipo(equipoId);
-});
-
-function cargarCaso(datos) {
-  return cargarCasoTx(datos);
+  return { equipo, pista };
 }
 
 module.exports = {
-  RUTAS_VALIDAS,
   listEquipos,
   getEquipo,
   crearEquipo,
   editarEquipo,
-  resetSimulacion,
+  reiniciarPartida,
+  borrarTodo,
   listHerramientas,
   getHerramienta,
   listComprasPorEquipo,
-  comprarHerramienta,
-  cargarCaso,
+  usarHerramienta,
 };
