@@ -295,3 +295,98 @@ form.formulario label {
 #btn-borrar-todo:disabled {
   background: #cbd2d9;
 }
+
+#banner-ronda {
+  margin-bottom: 1rem;
+}
+
+.cartel-cubierto {
+  font-weight: 600;
+  margin: 0;
+}
+
+.tarjeta-pista {
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.pista-etiqueta {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.pista-texto {
+  margin: 0.25rem 0 0;
+  font-weight: 600;
+}
+
+.toast-contenedor {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 100;
+  width: min(90vw, 26rem);
+}
+
+.toast {
+  border-radius: 10px;
+  padding: 0.75rem 2.25rem 0.75rem 1rem;
+  position: relative;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.toast-preventiva {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.toast-reactiva {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.toast-omision {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.toast-cerrar {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.5rem;
+  background: transparent;
+  color: inherit;
+  border: none;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.2rem 0.4rem;
+}
+
+.toast-cerrar:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.indicador-vulnerable {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: #dc2626;
+  margin-left: 0.5rem;
+}
+
+.fila-ganador {
+  background: #dcfce7;
+  font-weight: 700;
+}

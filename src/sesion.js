@@ -7,7 +7,9 @@ function getSesionRaw() {
 function getCasoActivo(sesion) {
   if (!sesion.caso_actual) return null;
   const caso = db.prepare('SELECT * FROM casos WHERE numero = ?').get(sesion.caso_actual);
-  return caso ? { numero: caso.numero, categoria: caso.categoria, titulo: caso.titulo } : null;
+  return caso
+    ? { numero: caso.numero, categoria: caso.categoria, titulo: caso.titulo, costoReactiva: caso.costo_reactiva }
+    : null;
 }
 
 function getSesionPublica() {
@@ -201,6 +203,7 @@ function verificarYCerrarSiVencio() {
 }
 
 const confirmarResultadosTx = db.transaction((pendiente, casoNumero, ajustesOverride) => {
+  const aplicados = [];
   for (const item of pendiente) {
     const override = (ajustesOverride || []).find((a) => a.equipoId === item.equipoId) || {};
     const ruta = override.ruta || item.ruta;
@@ -237,8 +240,19 @@ const confirmarResultadosTx = db.transaction((pendiente, casoNumero, ajustesOver
          ON CONFLICT(equipo_id, categoria) DO UPDATE SET vulnerable_desde_caso = NULL`
       ).run(item.equipoId, item.categoria);
     }
+
+    aplicados.push({
+      equipoId: item.equipoId,
+      casoNumero,
+      categoria: item.categoria,
+      ruta,
+      deltaPresupuesto,
+      deltaReputacion,
+      vulnerable,
+    });
   }
   db.prepare('UPDATE sesion SET resolucion_pendiente = NULL WHERE id = 1').run();
+  return aplicados;
 });
 
 function confirmarResultados(ajustesOverride) {
@@ -247,8 +261,7 @@ function confirmarResultados(ajustesOverride) {
     throw new Error('No hay una resolución pendiente de confirmación.');
   }
   const pendiente = JSON.parse(sesion.resolucion_pendiente);
-  confirmarResultadosTx(pendiente, sesion.caso_actual, ajustesOverride);
-  return pendiente;
+  return confirmarResultadosTx(pendiente, sesion.caso_actual, ajustesOverride);
 }
 
 function reaccionar(equipoId) {

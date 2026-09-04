@@ -11,6 +11,8 @@
   <main>
     <div id="mensaje"></div>
 
+    <div id="banner-ronda" class="tarjeta-sesion" hidden></div>
+
     <div class="stat-grande">
       <div class="stat">
         <div class="valor" id="valor-presupuesto"><%= equipo.presupuesto %></div>
@@ -22,7 +24,12 @@
       </div>
     </div>
 
-    <h2>Herramientas compradas</h2>
+    <div id="tarjeta-pista" class="tarjeta-pista" hidden>
+      <span class="pista-etiqueta">Pista de auditoría interna</span>
+      <p class="pista-texto"></p>
+    </div>
+
+    <h2>Herramientas en uso</h2>
     <div class="compradas-lista" id="lista-compradas"></div>
 
     <h2>Catálogo</h2>
@@ -35,13 +42,14 @@
           </span>
           <% items.forEach((h) => { %>
             <div class="herramienta-card" data-id="<%= h.id %>" data-costo="<%= h.costo %>"
+                 data-categoria="<%= h.categoria %>" data-requiere="<%= h.requiere || '' %>"
                  style="background: <%= cat.fondo %>;">
               <div class="info">
                 <div class="nombre" style="color: <%= cat.color %>;"><%= h.nombre %></div>
                 <div class="descripcion"><%= h.descripcion %></div>
               </div>
               <div class="costo">Costo: <%= h.costo %></div>
-              <button class="btn-comprar" type="button">Comprar</button>
+              <button class="btn-utilizar" type="button">Utilizar</button>
             </div>
           <% }) %>
         </div>
@@ -49,8 +57,13 @@
     <% }) %>
   </main>
 
-  <script id="equipo-inicial" type="application/json"><%- JSON.stringify({ id: equipo.id, presupuesto: equipo.presupuesto, reputacion: equipo.reputacion, herramientas: compradas }) %></script>
-  <script id="herramientas-info" type="application/json"><%- JSON.stringify(herramientas.map((h) => ({ id: h.id, nombre: h.nombre, costo: h.costo }))) %></script>
+  <div id="toast-resultado" class="toast-contenedor"></div>
+
+  <script id="equipo-inicial" type="application/json"><%- JSON.stringify({ id: equipo.id, presupuesto: equipo.presupuesto, reputacion: equipo.reputacion, herramientas: compradas, reaccionoEstaRonda: equipo.reaccionoEstaRonda }) %></script>
+  <script id="herramientas-info" type="application/json"><%- JSON.stringify(herramientas.map((h) => ({ id: h.id, nombre: h.nombre, costo: h.costo, categoria: h.categoria, requiere: h.requiere }))) %></script>
+  <script id="sesion-inicial" type="application/json"><%- JSON.stringify(sesion) %></script>
+  <script id="pista-inicial" type="application/json"><%- JSON.stringify(pista) %></script>
+  <script id="categorias-info" type="application/json"><%- JSON.stringify(categorias) %></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/equipo.js"></script>
 </body>

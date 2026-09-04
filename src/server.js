@@ -157,6 +157,9 @@ app.post('/api/sesion/confirmar', (req, res) => {
   try {
     const resultado = sesionMod.confirmarResultados(req.body.ajustes || []);
     emitirEstado();
+    for (const item of resultado) {
+      io.to(`equipo:${item.equipoId}`).emit('resultado:caso', item);
+    }
     res.json({ ok: true, resultado });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -168,18 +171,20 @@ app.get('/equipo', (req, res) => {
 });
 
 app.get('/equipo/:id', (req, res) => {
-  const equipo = q.getEquipo(Number(req.params.id));
-  if (!equipo) {
+  const id = Number(req.params.id);
+  const existe = q.getEquipo(id);
+  if (!existe) {
     res.status(404).send('Equipo no encontrado.');
     return;
   }
+  const equipo = q.listEquipos().find((e) => e.id === id);
   res.render('equipo', {
     equipo,
     herramientas: q.listHerramientas(),
-    compradas: q.listComprasPorEquipo(equipo.id),
+    compradas: q.listComprasPorEquipo(id),
     categorias: CATEGORIAS,
     sesion: sesionMod.getSesionPublica(),
-    pista: pistas.getPista(equipo.id),
+    pista: pistas.getPistaConMensaje(id),
   });
 });
 

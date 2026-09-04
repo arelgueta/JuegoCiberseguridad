@@ -38,4 +38,10 @@ function generarPista(equipoId) {
   return { equipoId, categoriaSugerida: guardada.categoria_sugerida, mensaje: mensajeDePista(guardada.categoria_sugerida) };
 }
 
-module.exports = { generarPista, getPista, categoriasPendientes };
+function getPistaConMensaje(equipoId) {
+  const guardada = getPista(equipoId);
+  if (!guardada) return null;
+  return { categoriaSugerida: guardada.categoria_sugerida, mensaje: mensajeDePista(guardada.categoria_sugerida) };
+}
+
+module.exports = { generarPista, getPista, getPistaConMensaje, categoriasPendientes };
