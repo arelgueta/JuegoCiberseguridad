@@ -9,6 +9,8 @@
 <body>
   <header class="app-header"><h1>BRECHA — Ranking en vivo</h1></header>
   <main>
+    <div id="banner-ronda" class="tarjeta-sesion" hidden></div>
+
     <table class="proyector-tabla">
       <thead>
         <tr>
@@ -24,6 +26,7 @@
   </main>
 
   <script id="equipos-iniciales" type="application/json"><%- JSON.stringify(equipos) %></script>
+  <script id="sesion-inicial" type="application/json"><%- JSON.stringify(sesion) %></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/proyector.js"></script>
 </body>
