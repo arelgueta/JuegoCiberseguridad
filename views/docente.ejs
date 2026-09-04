@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BRECHA — Docente</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="app-header"><h1>BRECHA — Panel del docente</h1></header>
+  <main>
+    <div id="mensaje"></div>
+
+    <h2>Equipos</h2>
+    <table id="tabla-equipos">
+      <thead>
+        <tr><th>Equipo</th><th>Presupuesto</th><th>Reputación</th><th></th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h2>Crear equipo</h2>
+    <form id="form-crear-equipo" class="formulario">
+      <label>Nombre
+        <input type="text" name="nombre" required>
+      </label>
+      <button type="submit">Crear equipo</button>
+    </form>
+
+    <h2>Cargar resultado de caso</h2>
+    <form id="form-caso" class="formulario">
+      <label>Equipo
+        <select name="equipoId" id="select-equipo-caso" required></select>
+      </label>
+      <label>Caso #
+        <input type="number" name="casoNumero" min="1" max="10" required>
+      </label>
+      <label>Ruta
+        <select name="ruta" required>
+          <option value="preventiva">Preventiva</option>
+          <option value="reactiva">Reactiva</option>
+          <option value="omision">Omisión</option>
+        </select>
+      </label>
+      <label>Δ Presupuesto
+        <input type="number" name="deltaPresupuesto" value="0" required>
+      </label>
+      <label>Δ Reputación
+        <input type="number" name="deltaReputacion" value="0" required>
+      </label>
+      <label>¿Vulnerable?
+        <input type="checkbox" name="vulnerable">
+      </label>
+      <button type="submit">Cargar caso</button>
+    </form>
+
+    <h2>Reiniciar simulación</h2>
+    <button id="btn-reset" class="peligro" type="button">Reiniciar todo</button>
+  </main>
+
+  <script id="equipos-iniciales" type="application/json"><%- JSON.stringify(equipos) %></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/docente.js"></script>
+</body>
+</html>

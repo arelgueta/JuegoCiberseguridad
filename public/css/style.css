@@ -1,0 +1,237 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: #f5f6f8;
+  color: #1a1a1a;
+}
+
+header.app-header {
+  background: #111827;
+  color: #fff;
+  padding: 1rem 1.25rem;
+}
+
+header.app-header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+main {
+  padding: 1rem 1.25rem 3rem;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+h2 {
+  font-size: 1.1rem;
+  margin-top: 2rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+th {
+  background: #f0f1f3;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: #555;
+}
+
+input, select, button {
+  font-size: 1rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #cbd2d9;
+}
+
+input[type="number"] {
+  width: 5.5rem;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: #111827;
+  color: #fff;
+  font-weight: 600;
+}
+
+button:hover {
+  background: #1f2937;
+}
+
+button:disabled {
+  background: #cbd2d9;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+button.peligro {
+  background: #991b1b;
+}
+
+button.peligro:hover {
+  background: #b91c1c;
+}
+
+form.formulario {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+form.formulario label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+  gap: 0.25rem;
+}
+
+.mensaje {
+  margin: 0.75rem 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.mensaje.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.mensaje.exito {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.equipo-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.equipo-selector a {
+  display: block;
+  text-align: center;
+  background: #111827;
+  color: #fff;
+  text-decoration: none;
+  padding: 1.5rem 1rem;
+  border-radius: 10px;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.stat-grande {
+  display: flex;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.stat-grande .stat {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1rem 1.5rem;
+  flex: 1;
+  text-align: center;
+}
+
+.stat-grande .valor {
+  font-size: 2.2rem;
+  font-weight: 800;
+}
+
+.stat-grande .etiqueta {
+  font-size: 0.85rem;
+  color: #555;
+  text-transform: uppercase;
+}
+
+.categoria-grupo {
+  margin-top: 1.5rem;
+}
+
+.categoria-titulo {
+  display: inline-block;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.herramienta-card {
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.6rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.herramienta-card .info {
+  flex: 1;
+  min-width: 200px;
+}
+
+.herramienta-card .nombre {
+  font-weight: 700;
+}
+
+.herramienta-card .descripcion {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.herramienta-card .costo {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.proyector-tabla {
+  font-size: 1.4rem;
+}
+
+.proyector-tabla th {
+  font-size: 1rem;
+}
+
+.proyector-tabla .puesto {
+  font-weight: 800;
+  width: 3rem;
+}
+
+.compradas-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.5rem 0 1.5rem;
+}
+
+.compradas-lista span {
+  background: #e5e7eb;
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.85rem;
+}
