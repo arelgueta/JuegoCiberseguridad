@@ -11,7 +11,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS equipos (
     id INTEGER PRIMARY KEY,
     nombre TEXT NOT NULL UNIQUE,
-    presupuesto INTEGER NOT NULL DEFAULT 20,
+    presupuesto INTEGER NOT NULL DEFAULT 30,
     reputacion INTEGER NOT NULL DEFAULT 20,
     creado_en TEXT NOT NULL DEFAULT (datetime('now'))
   );
@@ -98,6 +98,12 @@ const columnasHerramientas = db.prepare("PRAGMA table_info(herramientas)").all()
 if (!columnasHerramientas.includes('requiere')) {
   db.exec('ALTER TABLE herramientas ADD COLUMN requiere TEXT');
 }
+if (!columnasHerramientas.includes('nivel')) {
+  db.exec('ALTER TABLE herramientas ADD COLUMN nivel TEXT');
+}
+if (!columnasHerramientas.includes('bono_reputacion')) {
+  db.exec('ALTER TABLE herramientas ADD COLUMN bono_reputacion INTEGER');
+}
 
 const columnasNoticias = db.prepare("PRAGMA table_info(noticias)").all().map((c) => c.name);
 if (!columnasNoticias.includes('fuente')) {
@@ -110,28 +116,63 @@ db.prepare('INSERT OR IGNORE INTO sesion (id) VALUES (1)').run();
 // casos sorteables. 'general' y 'politicas' no son categorías de amenaza (ver SPEC3/SPEC4).
 const CATEGORIAS_AMENAZA = ['phishing', 'pass', 'social', 'ransom', 'fake', 'cloud', 'auditoria'];
 
+// Árbol de 3 niveles por categoría (SPEC8.md), con la asimetría de SPEC9.md ya aplicada:
+// edr-aislamiento (ransom, 3-A) da +2 de bono en vez del +1 genérico, y
+// auditoria-automatizacion-reportes (auditoria, 3-A) no da bono de reputación — su "premio"
+// es duplicar la pista de programa-auditoria-interna (lógica en src/pistas.js), no un número
+// acá. nivel: '1' | '2' | '3-A' | '3-B' | null (sin árbol). bono_reputacion: solo se usa en
+// cartas 3-A que suman reputación extra al resolver Preventiva; null en todas las demás.
 const CATALOGO_HERRAMIENTAS = [
-  { id: 'filtro-anti-phishing', categoria: 'phishing', nombre: 'Filtro anti-phishing + SPF/DKIM/DMARC', costo: 3, descripcion: 'Verifica automáticamente la autenticidad del remitente y bloquea dominios falsificados.', requiere: null },
-  { id: 'capacitacion-phishing', categoria: 'phishing', nombre: 'Capacitación en detección de phishing', costo: 2, descripcion: 'Entrena al personal para identificar enlaces, adjuntos y remitentes sospechosos.', requiere: null },
-  { id: 'mfa-accesos-criticos', categoria: 'pass', nombre: 'MFA en accesos críticos', costo: 3, descripcion: 'Segundo factor de autenticación en VPN, correo y paneles de administración.', requiere: null },
-  { id: 'gestor-contrasenas', categoria: 'pass', nombre: 'Gestor de contraseñas corporativo', costo: 2, descripcion: 'Contraseñas únicas y complejas por servicio, sin reutilización entre sistemas.', requiere: null },
-  { id: 'verificacion-fuera-banda', categoria: 'social', nombre: 'Protocolo de verificación fuera de banda', costo: 2, descripcion: 'Confirmar pedidos sensibles por un canal distinto antes de actuar.', requiere: null },
-  { id: 'control-acceso-fisico', categoria: 'social', nombre: 'Control de acceso físico reforzado', costo: 2, descripcion: 'Badges, control de tailgating y registro de visitantes.', requiere: null },
-  { id: 'backups-inmutables', categoria: 'ransom', nombre: 'Backups inmutables (regla 3-2-1)', costo: 4, descripcion: 'Copias offline probadas, restaurables sin depender del pago de rescate.', requiere: null },
-  { id: 'edr-aislamiento', categoria: 'ransom', nombre: 'EDR con aislamiento automático', costo: 4, descripcion: 'Detecta y aísla endpoints comprometidos antes de que el ataque se propague.', requiere: null },
-  { id: 'gestion-parches', categoria: 'ransom', nombre: 'Gestión de parches automatizada', costo: 3, descripcion: 'Reduce la ventana de exposición a vulnerabilidades conocidas.', requiere: null },
-  { id: 'plan-comunicacion-crisis', categoria: 'fake', nombre: 'Plan de comunicación de crisis', costo: 2, descripcion: 'Canal oficial único para desmentir información falsa con rapidez.', requiere: null },
-  { id: 'monitoreo-marca', categoria: 'fake', nombre: 'Monitoreo de marca en redes', costo: 2, descripcion: 'Detecta menciones anómalas o campañas de desinformación en etapa temprana.', requiere: null },
-  { id: 'verificacion-fuentes', categoria: 'fake', nombre: 'Protocolo de verificación de fuentes', costo: 1, descripcion: 'Antes de reaccionar públicamente, se chequea origen, fecha y autor.', requiere: null },
-  { id: 'minimo-privilegio', categoria: 'cloud', nombre: 'Mínimo privilegio + auditoría de permisos', costo: 3, descripcion: 'Revisión periódica de accesos y cuentas de servicio en la nube.', requiere: null },
-  { id: 'auditoria-proveedores', categoria: 'cloud', nombre: 'Auditoría de proveedores externos', costo: 3, descripcion: 'Evalúa el riesgo de seguridad de terceros con acceso a tus sistemas.', requiere: null },
-  { id: 'escaneo-dependencias', categoria: 'cloud', nombre: 'Escaneo de dependencias (SBOM)', costo: 2, descripcion: 'Verifica la integridad de librerías externas antes de actualizar.', requiere: null },
-  { id: 'plan-respuesta-incidentes', categoria: 'general', nombre: 'Plan de respuesta a incidentes', costo: 4, descripcion: 'Reduce en 1 unidad el costo de emergencia de cualquier categoría.', requiere: null },
-  { id: 'programa-auditoria-interna', categoria: 'auditoria', nombre: 'Programa de auditoría interna', costo: 3, descripcion: 'Revisiones periódicas que detectan y corrigen brechas antes de que las encuentre un auditor externo.', requiere: null },
-  { id: 'relevamiento-ti', categoria: 'politicas', nombre: 'Relevamiento de TI', costo: 2, descripcion: 'Sin efecto propio en presupuesto/reputación. Habilita utilizar Gestión de riesgos.', requiere: null },
-  { id: 'gestion-riesgos', categoria: 'politicas', nombre: 'Gestión de riesgos', costo: 3, descripcion: 'Mientras se tenga: reduce un 30% cualquier penalización de Omisión (presupuesto y reputación, en cualquier categoría).', requiere: 'relevamiento-ti' },
-  { id: 'siem', categoria: 'politicas', nombre: 'Incorporación de SIEM', costo: 4, descripcion: 'Mientras se tenga: cualquier caso que hubiera terminado en Omisión se resuelve como Reactiva sin cobrar el costo de emergencia.', requiere: null },
-  { id: 'comite-gobierno', categoria: 'politicas', nombre: 'Comité de gobierno de seguridad', costo: 2, descripcion: 'Mientras se tenga: el duplicado por categoría vulnerable repetida nunca se aplica para este equipo.', requiere: null },
+  // Correo y phishing
+  { id: 'capacitacion-phishing', categoria: 'phishing', nombre: 'Capacitación en detección de phishing', costo: 2, descripcion: 'Entrena al personal para identificar enlaces, adjuntos y remitentes sospechosos.', requiere: null, nivel: '1', bono_reputacion: null },
+  { id: 'filtro-anti-phishing', categoria: 'phishing', nombre: 'Filtro anti-phishing + SPF/DKIM/DMARC', costo: 3, descripcion: 'Verifica automáticamente la autenticidad del remitente y bloquea dominios falsificados.', requiere: 'capacitacion-phishing', nivel: '2', bono_reputacion: null },
+  { id: 'phishing-soar', categoria: 'phishing', nombre: 'Respuesta automatizada (SOAR)', costo: 3, descripcion: 'Automatiza la respuesta ante intentos de phishing detectados. Rama recompensa: +1 reputación extra cuando resuelve Preventiva.', requiere: 'filtro-anti-phishing', nivel: '3-A', bono_reputacion: 1 },
+  { id: 'phishing-simulacros', categoria: 'phishing', nombre: 'Simulacros de phishing dirigido', costo: 2, descripcion: 'Simulacros periódicos de phishing dirigido al personal. Rama resiliencia: sin duplicado por vulnerabilidad repetida, solo en phishing.', requiere: 'filtro-anti-phishing', nivel: '3-B', bono_reputacion: null },
+
+  // Contraseñas y accesos
+  { id: 'gestor-contrasenas', categoria: 'pass', nombre: 'Gestor de contraseñas corporativo', costo: 2, descripcion: 'Contraseñas únicas y complejas por servicio, sin reutilización entre sistemas.', requiere: null, nivel: '1', bono_reputacion: null },
+  { id: 'mfa-accesos-criticos', categoria: 'pass', nombre: 'MFA en accesos críticos', costo: 3, descripcion: 'Segundo factor de autenticación en VPN, correo y paneles de administración.', requiere: 'gestor-contrasenas', nivel: '2', bono_reputacion: null },
+  { id: 'pass-auth-adaptativa', categoria: 'pass', nombre: 'Autenticación adaptativa', costo: 3, descripcion: 'Autenticación que ajusta el riesgo según el contexto del acceso. Rama recompensa: +1 reputación extra.', requiere: 'mfa-accesos-criticos', nivel: '3-A', bono_reputacion: 1 },
+  { id: 'pass-rotacion-automatica', categoria: 'pass', nombre: 'Rotación automática de credenciales', costo: 2, descripcion: 'Rotación automática de credenciales ante una filtración detectada. Rama resiliencia: sin duplicado, solo en contraseñas.', requiere: 'mfa-accesos-criticos', nivel: '3-B', bono_reputacion: null },
+
+  // Ingeniería social
+  { id: 'control-acceso-fisico', categoria: 'social', nombre: 'Control de acceso físico reforzado', costo: 2, descripcion: 'Badges, control de tailgating y registro de visitantes.', requiere: null, nivel: '1', bono_reputacion: null },
+  { id: 'verificacion-fuera-banda', categoria: 'social', nombre: 'Protocolo de verificación fuera de banda', costo: 2, descripcion: 'Confirmar pedidos sensibles por un canal distinto antes de actuar.', requiere: 'control-acceso-fisico', nivel: '2', bono_reputacion: null },
+  { id: 'social-simulacros', categoria: 'social', nombre: 'Simulacros de pretexting y vishing', costo: 3, descripcion: 'Simulacros de pretexting y vishing con el personal. Rama recompensa: +1 reputación extra.', requiere: 'verificacion-fuera-banda', nivel: '3-A', bono_reputacion: 1 },
+  { id: 'social-protocolo-escalamiento', categoria: 'social', nombre: 'Protocolo de escalamiento', costo: 2, descripcion: 'Protocolo claro de a quién escalar ante una sospecha. Rama resiliencia: sin duplicado, solo en ingeniería social.', requiere: 'verificacion-fuera-banda', nivel: '3-B', bono_reputacion: null },
+
+  // Ransomware y endpoints
+  { id: 'gestion-parches', categoria: 'ransom', nombre: 'Gestión de parches automatizada', costo: 3, descripcion: 'Reduce la ventana de exposición a vulnerabilidades conocidas.', requiere: null, nivel: '1', bono_reputacion: null },
+  { id: 'backups-inmutables', categoria: 'ransom', nombre: 'Backups inmutables (regla 3-2-1)', costo: 4, descripcion: 'Copias offline probadas, restaurables sin depender del pago de rescate.', requiere: 'gestion-parches', nivel: '2', bono_reputacion: null },
+  { id: 'edr-aislamiento', categoria: 'ransom', nombre: 'EDR con aislamiento automático', costo: 4, descripcion: 'Detecta y aísla endpoints comprometidos automáticamente. Rama recompensa: +2 reputación extra (ransomware es la categoría de mayor riesgo del juego).', requiere: 'backups-inmutables', nivel: '3-A', bono_reputacion: 2 },
+  { id: 'ransom-plan-continuidad', categoria: 'ransom', nombre: 'Plan de continuidad de negocio', costo: 3, descripcion: 'Plan de continuidad de negocio ante una interrupción prolongada. Rama resiliencia: sin duplicado, solo en ransomware.', requiere: 'backups-inmutables', nivel: '3-B', bono_reputacion: null },
+
+  // Redes y desinformación
+  { id: 'verificacion-fuentes', categoria: 'fake', nombre: 'Protocolo de verificación de fuentes', costo: 1, descripcion: 'Antes de reaccionar públicamente, se chequea origen, fecha y autor.', requiere: null, nivel: '1', bono_reputacion: null },
+  { id: 'plan-comunicacion-crisis', categoria: 'fake', nombre: 'Plan de comunicación de crisis', costo: 2, descripcion: 'Canal oficial único para desmentir información falsa con rapidez.', requiere: 'verificacion-fuentes', nivel: '2', bono_reputacion: null },
+  { id: 'monitoreo-marca', categoria: 'fake', nombre: 'Monitoreo de marca en redes', costo: 2, descripcion: 'Detecta menciones anómalas en etapa temprana. Rama recompensa: +1 reputación extra.', requiere: 'plan-comunicacion-crisis', nivel: '3-A', bono_reputacion: 1 },
+  { id: 'fake-protocolo-desmentido', categoria: 'fake', nombre: 'Protocolo de desmentido multicanal', costo: 2, descripcion: 'Protocolo coordinado de desmentido multicanal. Rama resiliencia: sin duplicado, solo en desinformación.', requiere: 'plan-comunicacion-crisis', nivel: '3-B', bono_reputacion: null },
+
+  // Nube y terceros
+  { id: 'escaneo-dependencias', categoria: 'cloud', nombre: 'Escaneo de dependencias (SBOM)', costo: 2, descripcion: 'Verifica la integridad de librerías externas antes de actualizar.', requiere: null, nivel: '1', bono_reputacion: null },
+  { id: 'minimo-privilegio', categoria: 'cloud', nombre: 'Mínimo privilegio + auditoría de permisos', costo: 3, descripcion: 'Revisión periódica de accesos y cuentas de servicio en la nube.', requiere: 'escaneo-dependencias', nivel: '2', bono_reputacion: null },
+  { id: 'auditoria-proveedores', categoria: 'cloud', nombre: 'Auditoría de proveedores externos', costo: 3, descripcion: 'Evalúa el riesgo de seguridad de terceros con acceso a tus sistemas. Rama recompensa: +1 reputación extra.', requiere: 'minimo-privilegio', nivel: '3-A', bono_reputacion: 1 },
+  { id: 'cloud-segmentacion', categoria: 'cloud', nombre: 'Segmentación de entornos en la nube', costo: 3, descripcion: 'Segmentación de entornos en la nube para limitar el impacto de un incidente. Rama resiliencia: sin duplicado, solo en nube.', requiere: 'minimo-privilegio', nivel: '3-B', bono_reputacion: null },
+
+  // Auditoría
+  { id: 'auditoria-checklist-basico', categoria: 'auditoria', nombre: 'Checklist básico de cumplimiento', costo: 2, descripcion: 'Checklist básico de cumplimiento normativo.', requiere: null, nivel: '1', bono_reputacion: null },
+  { id: 'programa-auditoria-interna', categoria: 'auditoria', nombre: 'Programa de auditoría interna', costo: 3, descripcion: 'Revisiones periódicas que detectan y corrigen brechas antes de que las encuentre un auditor externo. Revela una pista privada sobre qué categoría reforzar.', requiere: 'auditoria-checklist-basico', nivel: '2', bono_reputacion: null },
+  { id: 'auditoria-automatizacion-reportes', categoria: 'auditoria', nombre: 'Automatización de reportes de cumplimiento', costo: 3, descripcion: 'Automatiza la generación de reportes de cumplimiento. Rama recompensa: la pista del programa de auditoría interna revela dos categorías en vez de una.', requiere: 'programa-auditoria-interna', nivel: '3-A', bono_reputacion: null },
+  { id: 'comite-auditoria-interna', categoria: 'auditoria', nombre: 'Comité de seguimiento de hallazgos', costo: 2, descripcion: 'Comité dedicado a seguimiento de hallazgos de auditoría. Rama resiliencia: sin duplicado, solo en auditoría.', requiere: 'programa-auditoria-interna', nivel: '3-B', bono_reputacion: null },
+
+  // Políticas (Momento 0 desde SPEC3.md; SPEC8.md solo le agrega la etiqueta de nivel)
+  { id: 'relevamiento-ti', categoria: 'politicas', nombre: 'Relevamiento de TI', costo: 2, descripcion: 'Sin efecto propio en presupuesto/reputación. Habilita utilizar Gestión de riesgos.', requiere: null, nivel: '1', bono_reputacion: null },
+  { id: 'gestion-riesgos', categoria: 'politicas', nombre: 'Gestión de riesgos', costo: 3, descripcion: 'Mientras se tenga: reduce un 30% cualquier penalización de Omisión (presupuesto y reputación, en cualquier categoría).', requiere: 'relevamiento-ti', nivel: '2', bono_reputacion: null },
+  { id: 'siem', categoria: 'politicas', nombre: 'Incorporación de SIEM', costo: 4, descripcion: 'Mientras se tenga: cualquier caso que hubiera terminado en Omisión se resuelve como Reactiva sin cobrar el costo de emergencia.', requiere: 'gestion-riesgos', nivel: '3-A', bono_reputacion: null },
+  { id: 'comite-gobierno', categoria: 'politicas', nombre: 'Comité de gobierno de seguridad', costo: 2, descripcion: 'Mientras se tenga: el duplicado por categoría vulnerable repetida nunca se aplica, en ninguna categoría.', requiere: 'gestion-riesgos', nivel: '3-B', bono_reputacion: null },
+
+  // Sin categoría de árbol: siempre visible, sin requisito.
+  { id: 'plan-respuesta-incidentes', categoria: 'general', nombre: 'Plan de respuesta a incidentes', costo: 4, descripcion: 'Reduce en 1 unidad el costo de emergencia de cualquier categoría.', requiere: null, nivel: null, bono_reputacion: null },
 ];
 
 const CASOS = [
@@ -212,14 +253,16 @@ const NOTICIAS = [
 ];
 
 const seedHerramienta = db.prepare(`
-  INSERT INTO herramientas (id, categoria, nombre, costo, descripcion, requiere)
-  VALUES (@id, @categoria, @nombre, @costo, @descripcion, @requiere)
+  INSERT INTO herramientas (id, categoria, nombre, costo, descripcion, requiere, nivel, bono_reputacion)
+  VALUES (@id, @categoria, @nombre, @costo, @descripcion, @requiere, @nivel, @bono_reputacion)
   ON CONFLICT(id) DO UPDATE SET
     categoria = excluded.categoria,
     nombre = excluded.nombre,
     costo = excluded.costo,
     descripcion = excluded.descripcion,
-    requiere = excluded.requiere
+    requiere = excluded.requiere,
+    nivel = excluded.nivel,
+    bono_reputacion = excluded.bono_reputacion
 `);
 
 const seedCaso = db.prepare(`
