@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BRECHA — Proyector</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="app-header"><h1>BRECHA — Ranking en vivo</h1></header>
+  <main>
+    <table class="proyector-tabla">
+      <thead>
+        <tr>
+          <th class="puesto">Puesto</th>
+          <th>Equipo</th>
+          <th>Presupuesto</th>
+          <th>Reputación</th>
+          <th>Puntaje</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-proyector"></tbody>
+    </table>
+  </main>
+
+  <script id="equipos-iniciales" type="application/json"><%- JSON.stringify(equipos) %></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/proyector.js"></script>
+</body>
+</html>

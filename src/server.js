@@ -114,6 +114,10 @@ app.post('/api/equipos/:id/comprar', (req, res) => {
   }
 });
 
+app.get('/proyector', (req, res) => {
+  res.render('proyector', { equipos: q.listEquipos() });
+});
+
 httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`BRECHA escuchando en 0.0.0.0:${PORT}`);
 });
