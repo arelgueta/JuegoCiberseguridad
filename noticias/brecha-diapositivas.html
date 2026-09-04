@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>BRECHA — Diapositivas de casos</title>
+<style>
+:root{
+  --surface-2:#ffffff; --surface-1:#f6f5f2; --surface-0:#efeee9;
+  --text-primary:#1c1c1a; --text-secondary:#5f5e5a; --text-muted:#888780;
+  --border:#d3d1c7; --border-strong:#b4b2a9;
+  --blue-50:#E6F1FB; --blue-600:#185FA5; --blue-800:#0C447C;
+  --purple-50:#EEEDFE; --purple-600:#534AB7; --purple-800:#3C3489;
+  --coral-50:#FAECE7; --coral-600:#993C1D; --coral-800:#712B13;
+  --pink-50:#FBEAF0; --pink-600:#993556; --pink-800:#72243E;
+  --amber-50:#FAEEDA; --amber-600:#854F0B; --amber-800:#633806;
+  --teal-50:#E1F5EE; --teal-600:#0F6E56; --teal-800:#085041;
+  --green-50:#EAF3DE; --green-600:#3B6D11; --green-800:#27500A;
+  --red-50:#FCEBEB; --red-600:#A32D2D; --red-800:#791F1F;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --surface-2:#232320; --surface-1:#1a1a18; --surface-0:#141412;
+    --text-primary:#f1efe8; --text-secondary:#b4b2a9; --text-muted:#888780;
+    --border:#444441; --border-strong:#5f5e5a;
+  }
+}
+:root[data-theme="dark"]{
+  --surface-2:#232320; --surface-1:#1a1a18; --surface-0:#141412;
+  --text-primary:#f1efe8; --text-secondary:#b4b2a9; --text-muted:#888780;
+  --border:#444441; --border-strong:#5f5e5a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--surface-0);color:var(--text-primary);font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+body{min-height:100vh;display:flex;flex-direction:column}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:.8rem 1.5rem;border-bottom:0.5px solid var(--border);flex-wrap:wrap;gap:.5rem}
+.topbar .brand{font-size:14px;font-weight:700;color:var(--text-secondary)}
+.topbar .right{display:flex;align-items:center;gap:.75rem}
+select,.iconbtn{border:0.5px solid var(--border-strong);background:var(--surface-2);color:var(--text-primary);padding:.4rem .7rem;border-radius:8px;font-size:13px;cursor:pointer}
+.iconbtn:hover{background:var(--surface-1)}
+.counter{font-size:13px;color:var(--text-muted);min-width:70px;text-align:right}
+.deck{flex:1;display:flex;align-items:center;justify-content:center;padding:2rem;min-height:70vh}
+.slide{max-width:820px;width:100%;text-align:center}
+.kicker{display:inline-block;font-size:13px;font-weight:700;padding:5px 16px;border-radius:20px;margin-bottom:1.25rem}
+.cat-phishing{background:var(--blue-50);color:var(--blue-800)}
+.cat-pass{background:var(--purple-50);color:var(--purple-800)}
+.cat-social{background:var(--coral-50);color:var(--coral-800)}
+.cat-ransom{background:var(--pink-50);color:var(--pink-800)}
+.cat-fake{background:var(--amber-50);color:var(--amber-800)}
+.cat-cloud{background:var(--teal-50);color:var(--teal-800)}
+.cat-general{background:var(--green-50);color:var(--green-800)}
+.cat-news{background:var(--surface-1);color:var(--text-secondary)}
+h1.slidetitle{font-size:clamp(24px,4vw,38px);font-weight:700;margin:0 0 1rem;line-height:1.3}
+h2.slidetitle{font-size:clamp(20px,3.2vw,28px);font-weight:700;margin:0 0 1rem;line-height:1.35}
+.desc{font-size:clamp(16px,2vw,19px);color:var(--text-secondary);line-height:1.65;max-width:680px;margin:0 auto 1.5rem}
+.newsbadge{font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.6rem}
+.timerbox{display:flex;align-items:center;gap:1rem;background:var(--surface-1);border-radius:12px;padding:1rem 1.5rem;margin:0 auto 1.25rem;max-width:520px}
+.timernum{font-size:38px;font-weight:700;font-variant-numeric:tabular-nums;min-width:80px}
+.timerlabel{font-size:13px;color:var(--text-secondary);text-align:left}
+.timerbar{flex:1;height:6px;background:var(--border);border-radius:4px;overflow:hidden}
+.timerfill{height:100%;background:var(--text-primary);border-radius:4px;transition:width 1s linear}
+.controls{display:flex;justify-content:center;gap:.6rem;flex-wrap:wrap;margin-top:.75rem}
+button{border:0.5px solid var(--border-strong);background:var(--surface-2);color:var(--text-primary);padding:.75rem 1.4rem;border-radius:10px;cursor:pointer;font-size:14.5px;font-weight:600}
+button:hover{background:var(--surface-1)}
+button:active{transform:scale(0.98)}
+button.primary{background:var(--text-primary);color:var(--surface-2);border-color:var(--text-primary)}
+button.primary:hover{opacity:.9;background:var(--text-primary)}
+.routes{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-top:.5rem;text-align:left}
+.route{border-radius:12px;padding:1rem}
+.route h3{margin:0 0 .4rem;font-size:14px}
+.route p{margin:0;font-size:13.5px;line-height:1.5}
+.route-prev{background:var(--green-50);color:var(--green-800)}
+.route-react{background:var(--amber-50);color:var(--amber-800)}
+.route-omit{background:var(--red-50);color:var(--red-800)}
+.docnotes{margin-top:1.25rem;border-top:0.5px dashed var(--border);padding-top:1rem;font-size:14px;color:var(--text-secondary);text-align:left}
+.docnotes b{color:var(--text-primary)}
+.hiddenpanel{display:none;margin-top:1rem;text-align:left;background:var(--surface-1);border-radius:12px;padding:1rem 1.25rem;font-size:14px;color:var(--text-secondary)}
+.hiddenpanel.open{display:block}
+.hiddenpanel b{color:var(--text-primary)}
+.tag-pista{color:var(--green-800);font-weight:700}
+.tag-senuelo{color:var(--red-800);font-weight:700}
+.bottombar{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.5rem;border-top:0.5px solid var(--border)}
+.navbtn{min-width:110px}
+.dots{font-size:13px;color:var(--text-muted)}
+.fade-in{animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">BRECHA — simulación de decisiones</span>
+  <div class="right">
+    <select id="durSelect">
+      <option value="60">Cronómetro: 60 seg</option>
+      <option value="90" selected>Cronómetro: 90 seg</option>
+      <option value="120">Cronómetro: 120 seg</option>
+      <option value="180">Cronómetro: 180 seg</option>
+    </select>
+    <button class="iconbtn" onclick="goTo(0)">Ir al inicio</button>
+    <span class="counter" id="counter"></span>
+  </div>
+</div>
+
+<div class="deck">
+  <div class="slide" id="stage"></div>
+</div>
+
+<div class="bottombar">
+  <button class="navbtn" id="prevBtn" onclick="prevSlide()">&larr; Anterior</button>
+  <span class="dots" id="dots"></span>
+  <button class="navbtn primary" id="nextBtn" onclick="nextSlide()">Siguiente &rarr;</button>
+</div>
+
+<script>
+const casos = [
+  {cat:'phishing', label:'Correo y phishing', titulo:'Fraude del CEO (BEC)', desc:'Llega un correo que simula ser del CEO, dirigido al área de finanzas, pidiendo una transferencia urgente a un proveedor "nuevo" antes del cierre del día. El dominio del remitente es casi idéntico al oficial.',
+    prev:'Con filtro SPF/DKIM/DMARC o capacitación en phishing: el correo se detecta o se verifica antes de actuar. Sin costo extra, +2 reputación.',
+    react:'Sin la herramienta: llaman por otro canal para confirmar o contratan una verificación de emergencia. Costo de emergencia: 5 unidades.',
+    omit:'Se realiza la transferencia. −5 presupuesto, −4 reputación. Phishing queda vulnerable.',
+    nota:'Preguntar: ¿cómo distinguirían este correo de uno legítimo sin llamar directamente al remitente? ¿Qué política de doble aprobación evitaría esto?'},
+  {cat:'pass', label:'Contraseñas', titulo:'Credential stuffing contra la VPN', desc:'Se detectan miles de intentos de login a la VPN corporativa usando pares usuario/contraseña filtrados de otro servicio. Varios coinciden con contraseñas reales del personal.',
+    prev:'Con MFA en accesos críticos: los intentos fallan igual sin el segundo factor. Sin costo extra, +2 reputación.',
+    react:'Sin MFA: fuerzan un reseteo masivo de contraseñas de emergencia. Costo de emergencia: 4 unidades.',
+    omit:'Un atacante entra con credenciales válidas. −4 presupuesto, −3 reputación. Contraseñas queda vulnerable.',
+    nota:'Preguntar: ¿por qué el MFA sigue protegiendo incluso si la contraseña ya está filtrada?'},
+  {cat:'social', label:'Ingeniería social', titulo:'Vishing con voz clonada por IA', desc:'El área de finanzas recibe una llamada con una voz que suena idéntica a la del director financiero, pidiendo una transferencia urgente por una "emergencia" que no puede esperar.',
+    prev:'Con protocolo de verificación fuera de banda: se confirma por otro canal antes de actuar. Sin costo extra, +2 reputación.',
+    react:'Sin el protocolo: se investiga sobre la marcha, se pierde tiempo valioso. Costo de emergencia: 3 unidades.',
+    omit:'Se transfiere el dinero. −4 presupuesto, −3 reputación. Ingeniería social queda vulnerable.',
+    nota:'Preguntar: ¿qué canal alternativo usarían para confirmar la identidad? ¿Cómo entrenarían a alguien para desconfiar de una voz "conocida"?'},
+  {cat:'ransom', label:'Ransomware', titulo:'Cifrado de servidores de producción', desc:'Varios servidores muestran archivos con extensión .locked y una nota de rescate. La producción se detiene.',
+    prev:'Con backups inmutables 3-2-1: se restaura sin pagar rescate. Sin costo extra, +2 reputación.',
+    react:'Sin backups: contratan una consultora de respuesta a incidentes de emergencia. Costo de emergencia: 6 unidades.',
+    omit:'Se evalúa pagar el rescate, sin garantía de recuperación total. −7 presupuesto, −5 reputación. Ransomware queda vulnerable.',
+    nota:'Preguntar: ¿por qué pagar el rescate no garantiza recuperar los datos? ¿Qué tan seguido probarían una restauración real de sus backups?'},
+  {cat:'fake', label:'Desinformación', titulo:'Deepfake del CEO pidiendo donaciones', desc:'Un video con voz e imagen sintéticas del CEO circula en redes, pidiendo a empleados y clientes "donar" a una billetera cripto por una emergencia inventada.',
+    prev:'Con plan de comunicación de crisis: se desmiente en minutos por el canal oficial. Sin costo extra, +2 reputación.',
+    react:'Sin plan: arman una respuesta ad hoc mientras el video sigue circulando. Costo de emergencia: 3 unidades.',
+    omit:'La desinformación se expande sin respuesta oficial. −4 presupuesto, −4 reputación. Desinformación queda vulnerable.',
+    nota:'Preguntar: ¿qué señales técnicas o de contexto delatarían que el video es un deepfake?'},
+  {cat:'cloud', label:'Nube', titulo:'Bucket de almacenamiento público por error', desc:'Una auditoría externa descubre que un bucket en la nube con datos de clientes estuvo configurado como público durante semanas.',
+    prev:'Con mínimo privilegio y auditoría de permisos: la mala configuración se detecta y corrige antes de la exposición real. Sin costo extra, +2 reputación.',
+    react:'Sin auditoría: cierran el acceso ahora y contratan una revisión de emergencia. Costo de emergencia: 4 unidades.',
+    omit:'Los datos ya fueron indexados por buscadores. −5 presupuesto, −4 reputación. Nube queda vulnerable.',
+    nota:'Preguntar: ¿con qué frecuencia deberían auditar permisos en la nube? ¿Qué es el principio de mínimo privilegio en la práctica?'},
+  {cat:'cloud', label:'Cadena de suministro', titulo:'Librería de código abierto comprometida', desc:'Una actualización de una librería muy usada en el proyecto principal incluye código malicioso que se distribuye automáticamente a producción.',
+    prev:'Con escaneo de dependencias (SBOM): la versión maliciosa se detecta antes de desplegarse. Sin costo extra, +2 reputación.',
+    react:'Sin SBOM: revisan manualmente el código ya desplegado bajo presión de tiempo. Costo de emergencia: 3 unidades.',
+    omit:'El código malicioso llega a producción sin detectarse a tiempo. −5 presupuesto, −4 reputación. Nube queda vulnerable.',
+    nota:'Preguntar: ¿qué es un SBOM y por qué ayuda incluso cuando confiamos en el proveedor de la librería?'},
+  {cat:'ransom', label:'Vulnerabilidad crítica', titulo:'Día cero explotado activamente (RaaS)', desc:'Se publica un CVE crítico para un software que la empresa usa en un servidor expuesto a internet. Un grupo de atacantes ya lo está explotando activamente para acceder a otros sistemas.',
+    prev:'Con gestión de parches automatizada: el sistema ya recibió el parche disponible más reciente y el riesgo es menor. Sin costo extra, +2 reputación.',
+    react:'Sin gestión de parches: aplican el parche de emergencia fuera de horario. Costo de emergencia: 4 unidades.',
+    omit:'El servidor queda expuesto varios días más. −6 presupuesto, −4 reputación. Ransomware queda vulnerable (o se duplica si ya lo estaba).',
+    nota:'Preguntar: ¿qué balance hay entre parchear rápido y probar antes de desplegar en producción?'},
+  {cat:'fake', label:'Desinformación', titulo:'Comunicado falso de cierre de operaciones', desc:'Se viraliza en redes un comunicado falso, con el logo de la empresa, anunciando el cierre de operaciones. Clientes empiezan a cancelar contratos.',
+    prev:'Con monitoreo de marca en redes: se detecta la publicación apenas aparece y se actúa temprano. Sin costo extra, +2 reputación.',
+    react:'Sin monitoreo: se enteran por un cliente enojado, ya con horas de circulación. Costo de emergencia: 3 unidades.',
+    omit:'La noticia falsa circula sin respuesta durante todo el día. −5 presupuesto, −5 reputación. Desinformación queda vulnerable (o se duplica).',
+    nota:'Preguntar: ¿qué diferencia hay entre monitorear la marca y simplemente esperar a que alguien avise?'},
+  {cat:'general', label:'Auditoría final', titulo:'Auditoría externa de cierre de ejercicio', desc:'Una auditoría externa revisa todas las categorías marcadas como vulnerables a lo largo de la simulación y penaliza a las empresas que nunca las resolvieron.',
+    prev:'Por cada categoría que NO quedó vulnerable: +1 reputación.',
+    react:'Por cada categoría vulnerable que fue corregida comprando la herramienta en algún momento: sin efecto adicional.',
+    omit:'Por cada categoría que sigue vulnerable al día de hoy: −3 reputación adicional.',
+    nota:'Cierre del debrief: repasar con cada equipo qué categorías quedaron vulnerables y por qué priorizaron lo que priorizaron con su presupuesto inicial.'}
+];
+
+// 4 noticias antes de cada caso. tipo: 'pista' apunta a la categoría real que viene; 'senuelo' apunta a otra categoría o es ruido general.
+const noticiasPorCaso = [
+  [
+    {titulo:'Alertan sobre fraudes de suplantación de correo corporativo (BEC)', desc:'Una cámara empresarial reporta un aumento del 40% en fraudes de tipo BEC dirigidos a áreas de finanzas en el último trimestre.', tipo:'pista', explicacion:'Apunta a la categoría del próximo caso: correo y phishing.'},
+    {titulo:'Encuesta revela que la mayoría reutiliza contraseñas', desc:'Un estudio de hábitos digitales encuentra que 6 de cada 10 personas usa la misma contraseña en varios servicios.', tipo:'señuelo', explicacion:'Menciona contraseñas, pero el próximo caso no es sobre accesos.'},
+    {titulo:'Circulan videos manipulados con IA pidiendo donaciones', desc:'Se reportan casos de videos que suplantan a directivos de empresas para pedir transferencias a billeteras cripto.', tipo:'señuelo', explicacion:'Menciona desinformación con IA, categoría distinta a la del próximo caso.'},
+    {titulo:'Consultora publica su informe anual de tendencias en ciberseguridad', desc:'El reporte identifica al error humano como el factor más frecuente en los incidentes reportados este año.', tipo:'señuelo', explicacion:'Es ruido general, no apunta a ninguna categoría concreta.'}
+  ],
+  [
+    {titulo:'Foro clandestino ofrece millones de credenciales filtradas', desc:'Se detecta la venta de una base de datos combinada con credenciales de distintos servicios online.', tipo:'pista', explicacion:'Apunta a la categoría del próximo caso: contraseñas y accesos.'},
+    {titulo:'Aviso urgente por una vulnerabilidad crítica ya explotada', desc:'Se publica un CVE de severidad alta que ya está siendo aprovechado por atacantes en distintos países.', tipo:'señuelo', explicacion:'Menciona una vulnerabilidad crítica, pero el próximo caso es sobre contraseñas.'},
+    {titulo:'Un comunicado falso con el logo de una empresa se viraliza', desc:'Antes de ser desmentido, el comunicado genera cancelaciones de contratos por parte de clientes.', tipo:'señuelo', explicacion:'Es un caso de desinformación, categoría distinta a la del próximo caso.'},
+    {titulo:'Investigadores detectan una puerta trasera en una librería popular', desc:'La última actualización de una dependencia muy usada incluía código no autorizado.', tipo:'señuelo', explicacion:'Corresponde a cadena de suministro en la nube, no al próximo caso.'}
+  ],
+  [
+    {titulo:'Documentan estafas telefónicas con voz clonada por IA', desc:'Un caso reciente muestra cómo estafadores replican la voz de un directivo para pedir transferencias urgentes.', tipo:'pista', explicacion:'Apunta a la categoría del próximo caso: ingeniería social.'},
+    {titulo:'Un banco advierte sobre correos que imitan sus notificaciones', desc:'Se detectan campañas de phishing que copian el diseño exacto de los avisos oficiales del banco.', tipo:'señuelo', explicacion:'Es un caso de phishing, categoría distinta a la del próximo caso.'},
+    {titulo:'Hospital regional reporta interrupción de sistemas', desc:'Un ataque que cifra archivos deja fuera de servicio varios sistemas administrativos durante horas.', tipo:'señuelo', explicacion:'Corresponde a ransomware, no al próximo caso.'},
+    {titulo:'Anuncian una nueva certificación internacional en seguridad', desc:'La certificación busca estandarizar competencias para profesionales del área a nivel regional.', tipo:'señuelo', explicacion:'Es ruido general, no apunta a ninguna categoría concreta.'}
+  ],
+  [
+    {titulo:'Especialistas insisten en probar restauraciones reales de backups', desc:'Tener copias de seguridad no alcanza: recomiendan simulacros periódicos de recuperación completa.', tipo:'pista', explicacion:'Apunta a la categoría del próximo caso: ransomware y endpoints.'},
+    {titulo:'Recomiendan pasar a llaves de acceso para reducir robo de contraseñas', desc:'Las passkeys eliminan la necesidad de recordar contraseñas y reducen el riesgo de phishing de credenciales.', tipo:'señuelo', explicacion:'Menciona contraseñas, categoría distinta a la del próximo caso.'},
+    {titulo:'Cuentas coordinadas amplifican un hashtag con información falsa', desc:'El patrón de publicaciones sugiere una campaña organizada contra la reputación de una marca.', tipo:'señuelo', explicacion:'Es un caso de desinformación, no del próximo caso.'},
+    {titulo:'Auditoría revela un almacenamiento en la nube mal configurado', desc:'Datos de clientes estuvieron accesibles públicamente durante varias semanas antes de detectarse.', tipo:'señuelo', explicacion:'Corresponde a la categoría de nube, no al próximo caso.'}
+  ],
+  [
+    {titulo:'Una herramienta gratuita de voz con IA se vuelve tendencia', desc:'La app permite imitar voces conocidas con solo unos segundos de audio de referencia.', tipo:'pista', explicacion:'Apunta a la categoría del próximo caso: desinformación con IA.'},
+    {titulo:'Un impostor ingresa a una oficina siguiendo a un empleado', desc:'El caso, capturado por cámaras de seguridad, reabre el debate sobre el control de acceso físico.', tipo:'señuelo', explicacion:'Es un caso de ingeniería social, categoría distinta a la del próximo caso.'},
+    {titulo:'Proveedor externo con acceso a APIs sufre una filtración', desc:'Las credenciales comprometidas también daban acceso a sistemas de sus clientes.', tipo:'señuelo', explicacion:'Corresponde a la categoría de nube, no al próximo caso.'},
+    {titulo:'Un evento de la industria debate el futuro de la inteligencia artificial', desc:'Especialistas discuten oportunidades y riesgos de la adopción acelerada de IA en las empresas.', tipo:'señuelo', explicacion:'Es ruido general, no apunta a ninguna categoría concreta.'}
+  ],
+  [
+    {titulo:'Recomiendan revisar permisos de cuentas de servicio olvidadas', desc:'Muchas cuentas con privilegios elevados quedan activas mucho después de haber dejado de usarse.', tipo:'pista', explicacion:'Apunta a la categoría del próximo caso: nube y terceros.'},
+    {titulo:'Se detecta un aumento de dominios que imitan marcas conocidas', desc:'Usan caracteres visualmente similares a los originales para engañar a quien no revisa con atención.', tipo:'señuelo', explicacion:'Es un caso de phishing, categoría distinta a la del próximo caso.'},
+    {titulo:'Un grupo ofrece su malware como servicio a otros atacantes', desc:'El modelo de "ransomware como servicio" reduce la barrera técnica para lanzar ataques.', tipo:'señuelo', explicacion:'Corresponde a ransomware, no al próximo caso.'},
+    {titulo:'Aparece un perfil falso haciéndose pasar por reclutador técnico', desc:'El perfil buscaba obtener información sobre la infraestructura interna de varias empresas.', tipo:'señuelo', explicacion:'Es un caso de ingeniería social, no del próximo caso.'}
+  ],
+  [
+    {titulo:'Investigadores detectan una puerta trasera en una librería popular', desc:'La última actualización de una dependencia muy usada en proyectos empresariales incluía código no autorizado.', tipo:'pista', explicacion:'Apunta a la categoría del próximo caso: cadena de suministro en la nube.'},
+    {titulo:'Aumentan los intentos de acceso automatizado contra portales VPN', desc:'Los ataques prueban combinaciones de usuario y contraseña obtenidas de filtraciones previas.', tipo:'señuelo', explicacion:'Menciona accesos, categoría distinta a la del próximo caso.'},
+    {titulo:'Un comunicado falso vuelve a circular meses después', desc:'Una versión editada del rumor original reaparece en redes con nuevos detalles inventados.', tipo:'señuelo', explicacion:'Es un caso de desinformación, no del próximo caso.'},
+    {titulo:'Una universidad lanza un programa de becas en ciberseguridad', desc:'Busca fomentar la formación de nuevos profesionales del área en los próximos cinco años.', tipo:'señuelo', explicacion:'Es ruido general, no apunta a ninguna categoría concreta.'}
+  ],
+  [
+    {titulo:'Un grupo ofrece su malware como servicio a otros atacantes', desc:'El modelo de "ransomware como servicio" permite a grupos con menos experiencia técnica lanzar campañas propias.', tipo:'pista', explicacion:'Apunta a la categoría del próximo caso: ransomware y endpoints.'},
+    {titulo:'Aparecen pendrives "perdidos" con logos corporativos', desc:'Se encuentran en estacionamientos de varias empresas de la zona en las últimas semanas.', tipo:'señuelo', explicacion:'Es un caso de ingeniería social, categoría distinta a la del próximo caso.'},
+    {titulo:'Un proveedor externo con acceso a sistemas sufre una filtración', desc:'Las credenciales comprometidas también afectaban a las empresas que trabajaban con ese proveedor.', tipo:'señuelo', explicacion:'Corresponde a la categoría de nube, no al próximo caso.'},
+    {titulo:'Empresas de logística reportan correos falsos de confirmación de envío', desc:'Los mensajes incluyen enlaces que descargan software malicioso al hacer clic.', tipo:'señuelo', explicacion:'Es un caso de phishing, no del próximo caso.'}
+  ],
+  [
+    {titulo:'Cuentas coordinadas amplifican un hashtag con información falsa', desc:'El patrón de publicaciones sugiere una campaña organizada contra la reputación de una marca conocida.', tipo:'pista', explicacion:'Apunta a la categoría del próximo caso: redes y desinformación.'},
+    {titulo:'Encuesta revela que la mayoría reutiliza contraseñas', desc:'El estudio encuentra que la reutilización es más frecuente entre cuentas personales que laborales.', tipo:'señuelo', explicacion:'Menciona contraseñas, categoría distinta a la del próximo caso.'},
+    {titulo:'Se publica un aviso urgente por una vulnerabilidad crítica', desc:'Distintos organismos recomiendan aplicar el parche disponible lo antes posible.', tipo:'señuelo', explicacion:'Corresponde a ransomware, no al próximo caso.'},
+    {titulo:'Consultora publica su informe anual de tendencias en ciberseguridad', desc:'El reporte destaca un aumento sostenido de incidentes relacionados con terceros y proveedores.', tipo:'señuelo', explicacion:'Es ruido general, no apunta a ninguna categoría concreta.'}
+  ],
+  [
+    {titulo:'Las auditorías de fin de año se enfocarán en deuda técnica', desc:'Se anuncia que las próximas auditorías evaluarán qué empresas dejaron vulnerabilidades conocidas sin resolver.', tipo:'pista', explicacion:'Apunta al cierre: la auditoría final revisa categorías vulnerables sin resolver.'},
+    {titulo:'Alertan sobre fraudes de suplantación de correo corporativo', desc:'Se reporta un nuevo repunte de casos de BEC dirigidos a pequeñas y medianas empresas.', tipo:'señuelo', explicacion:'Es un caso de phishing, no corresponde al cierre general.'},
+    {titulo:'Documentan nuevas estafas telefónicas con voz clonada por IA', desc:'Los casos reportados muestran variantes cada vez más difíciles de distinguir de una llamada real.', tipo:'señuelo', explicacion:'Es un caso de ingeniería social, no corresponde al cierre general.'},
+    {titulo:'Un proveedor de nube anuncia nuevas certificaciones de seguridad', desc:'La empresa busca reforzar la confianza de sus clientes empresariales tras incidentes recientes en el sector.', tipo:'señuelo', explicacion:'Es un caso de nube, no corresponde al cierre general.'}
+  ]
+];
+
+const slides = [{type:'title'}];
+casos.forEach((c,i)=>{
+  noticiasPorCaso[i].forEach(n=>{ slides.push({type:'news', data:n}); });
+  slides.push({type:'question', data:c, idx:i});
+  slides.push({type:'reveal', data:c, idx:i});
+});
+slides.push({type:'closing'});
+
+let current = 0;
+let timer = null, remaining = 0, total = 0, pausado = false;
+
+function actualizarNav(){
+  document.getElementById('counter').textContent = (current+1) + ' / ' + slides.length;
+  document.getElementById('dots').textContent = 'Diapositiva ' + (current+1) + ' de ' + slides.length;
+  document.getElementById('prevBtn').disabled = current===0;
+  document.getElementById('nextBtn').textContent = current===slides.length-1 ? 'Fin' : 'Siguiente →';
+}
+
+function render(){
+  clearInterval(timer);
+  const s = slides[current];
+  const stage = document.getElementById('stage');
+  if(s.type==='title'){
+    stage.innerHTML = `<div class="fade-in">
+      <span class="kicker cat-general">Simulación de decisiones</span>
+      <h1 class="slidetitle">BRECHA</h1>
+      <p class="desc">Cada equipo administra un presupuesto y una reputación limitados como comité de seguridad de NovaTech. Antes de cada caso van a ver varias noticias del mundo real: algunas dan pistas sobre lo que se viene, otras despistan a propósito. Los casos se presentan sin nombre ni categoría — el equipo tiene que diagnosticar la situación antes de decidir. Circulá entre los grupos mientras deciden, sin darles la respuesta.</p>
+    </div>`;
+  } else if(s.type==='news'){
+    const n = s.data;
+    stage.innerHTML = `<div class="fade-in">
+      <span class="kicker cat-news">Noticia del mundo</span>
+      <h2 class="slidetitle">${n.titulo}</h2>
+      <p class="desc">${n.desc}</p>
+      <button onclick="toggleNota(this)">Mostrar nota del docente</button>
+      <div class="hiddenpanel"><b>${n.tipo==='pista' ? 'Pista real' : 'Señuelo'}:</b> ${n.explicacion}</div>
+    </div>`;
+  } else if(s.type==='question'){
+    const c = s.data;
+    total = parseInt(document.getElementById('durSelect').value,10);
+    remaining = total;
+    stage.innerHTML = `<div class="fade-in">
+      <span class="kicker cat-news">Caso ${s.idx+1}</span>
+      <p class="desc" style="font-size:clamp(18px,2.4vw,22px);color:var(--text-primary);max-width:640px">${c.desc}</p>
+      <div class="timerbox">
+        <div class="timernum" id="timernum">${remaining}</div>
+        <div style="flex:1">
+          <div class="timerlabel">tiempo de decisión — circulá entre los equipos</div>
+          <div class="timerbar"><div class="timerfill" id="timerfill" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="controls">
+        <button id="pauseBtn" onclick="pausarReanudar()">Pausar</button>
+      </div>
+    </div>`;
+    pausado = false;
+    correrTimer();
+  } else if(s.type==='reveal'){
+    const c = s.data;
+    stage.innerHTML = `<div class="fade-in">
+      <span class="kicker cat-${c.cat}">${c.label}</span>
+      <h2 class="slidetitle">${c.titulo}</h2>
+      <div class="routes">
+        <div class="route route-prev"><h3>Preventiva</h3><p>${c.prev}</p></div>
+        <div class="route route-react"><h3>Reactiva</h3><p>${c.react}</p></div>
+        <div class="route route-omit"><h3>Omisión</h3><p>${c.omit}</p></div>
+      </div>
+      <div class="docnotes"><b>Nota para orientar la discusión:</b> ${c.nota}</div>
+    </div>`;
+  } else if(s.type==='closing'){
+    stage.innerHTML = `<div class="fade-in">
+      <span class="kicker cat-general">Cierre</span>
+      <h1 class="slidetitle">Fin de la simulación</h1>
+      <p class="desc">Calculen el puntaje final de cada equipo: <b>Reputación + (Presupuesto restante ÷ 2)</b>. Repasen con cada equipo qué noticias los ayudaron, cuáles los despistaron, y qué categorías quedaron vulnerables.</p>
+    </div>`;
+  }
+  actualizarNav();
+}
+
+function toggleNota(btn){
+  const panel = btn.nextElementSibling;
+  panel.classList.toggle('open');
+  btn.textContent = panel.classList.contains('open') ? 'Ocultar nota del docente' : 'Mostrar nota del docente';
+}
+
+function correrTimer(){
+  timer = setInterval(()=>{
+    if(pausado) return;
+    remaining--;
+    const el = document.getElementById('timernum');
+    const fill = document.getElementById('timerfill');
+    if(el) el.textContent = Math.max(remaining,0);
+    if(fill) fill.style.width = Math.max(remaining/total*100,0) + '%';
+    if(remaining<=0){ clearInterval(timer); }
+  },1000);
+}
+function pausarReanudar(){
+  pausado = !pausado;
+  const btn = document.getElementById('pauseBtn');
+  if(btn) btn.textContent = pausado ? 'Reanudar' : 'Pausar';
+}
+
+function goTo(i){ current = Math.max(0, Math.min(slides.length-1, i)); render(); }
+function nextSlide(){ if(current < slides.length-1){ current++; render(); } }
+function prevSlide(){ if(current > 0){ current--; render(); } }
+
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'ArrowRight') nextSlide();
+  if(e.key === 'ArrowLeft') prevSlide();
+});
+
+render();
+</script>
+
+</body>
+</html>

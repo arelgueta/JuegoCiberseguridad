@@ -98,6 +98,10 @@ function borrarTodo() {
   borrarTodoTx();
 }
 
+function listNoticiasPorCaso(casoNumero) {
+  return db.prepare('SELECT * FROM noticias WHERE caso_numero = ? ORDER BY id').all(casoNumero);
+}
+
 function listHerramientas() {
   return db.prepare('SELECT * FROM herramientas ORDER BY categoria, nombre').all();
 }
@@ -169,5 +173,6 @@ module.exports = {
   listHerramientas,
   getHerramienta,
   listComprasPorEquipo,
+  listNoticiasPorCaso,
   usarHerramienta,
 };

@@ -215,6 +215,20 @@ app.get('/proyector', (req, res) => {
   res.render('proyector', { equipos: q.listEquipos(), sesion: sesionMod.getSesionPublica() });
 });
 
+function noticiasPublicas(casoNumero) {
+  return q.listNoticiasPorCaso(casoNumero).map((n) => ({ titulo: n.titulo, descripcion: n.descripcion }));
+}
+
+app.get('/proyector-noticias', (req, res) => {
+  const sesion = sesionMod.getSesionPublica();
+  const noticias = sesion.casoActivo ? noticiasPublicas(sesion.casoActivo.numero) : [];
+  res.render('proyector-noticias', { sesion, noticias });
+});
+
+app.get('/api/noticias/:casoNumero', (req, res) => {
+  res.json({ noticias: noticiasPublicas(Number(req.params.casoNumero)) });
+});
+
 httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`BRECHA escuchando en 0.0.0.0:${PORT}`);
 });
