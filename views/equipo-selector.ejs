@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BRECHA — Elegí tu equipo</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="app-header"><h1>BRECHA — Elegí tu equipo</h1></header>
+  <main>
+    <div class="equipo-selector" id="equipo-selector"></div>
+  </main>
+
+  <script id="equipos-iniciales" type="application/json"><%- JSON.stringify(equipos) %></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/equipo-selector.js"></script>
+</body>
+</html>

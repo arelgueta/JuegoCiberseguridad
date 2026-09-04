@@ -8,7 +8,19 @@ function puntaje(equipo) {
 
 function listEquipos() {
   const equipos = db.prepare('SELECT * FROM equipos ORDER BY nombre').all();
-  return equipos.map((e) => ({ ...e, puntaje: puntaje(e) }));
+  const compras = db.prepare('SELECT equipo_id, herramienta_id FROM compras').all();
+  const herramientasPorEquipo = new Map();
+  for (const c of compras) {
+    if (!herramientasPorEquipo.has(c.equipo_id)) {
+      herramientasPorEquipo.set(c.equipo_id, []);
+    }
+    herramientasPorEquipo.get(c.equipo_id).push(c.herramienta_id);
+  }
+  return equipos.map((e) => ({
+    ...e,
+    puntaje: puntaje(e),
+    herramientas: herramientasPorEquipo.get(e.id) || [],
+  }));
 }
 
 function getEquipo(id) {

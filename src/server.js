@@ -4,6 +4,7 @@ const { createServer } = require('node:http');
 const { Server } = require('socket.io');
 
 const q = require('./queries');
+const { CATEGORIAS } = require('./categorias');
 
 const PORT = process.env.PORT || 3000;
 
@@ -78,6 +79,34 @@ app.post('/api/casos', (req, res) => {
       deltaReputacion: Number(deltaReputacion),
       vulnerable: Boolean(vulnerable),
     });
+    emitirEstado();
+    res.json({ ok: true, equipo });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get('/equipo', (req, res) => {
+  res.render('equipo-selector', { equipos: q.listEquipos() });
+});
+
+app.get('/equipo/:id', (req, res) => {
+  const equipo = q.getEquipo(Number(req.params.id));
+  if (!equipo) {
+    res.status(404).send('Equipo no encontrado.');
+    return;
+  }
+  res.render('equipo', {
+    equipo,
+    herramientas: q.listHerramientas(),
+    compradas: q.listComprasPorEquipo(equipo.id),
+    categorias: CATEGORIAS,
+  });
+});
+
+app.post('/api/equipos/:id/comprar', (req, res) => {
+  try {
+    const equipo = q.comprarHerramienta(Number(req.params.id), req.body.herramienta_id);
     emitirEstado();
     res.json({ ok: true, equipo });
   } catch (err) {
