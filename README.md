@@ -5,7 +5,11 @@ está repartido en [SPEC.md](SPEC.md) (Fase 1: MVP), [SPEC2.md](SPEC2.md) (Fase 
 cronómetro), [SPEC3.md](SPEC3.md) (sorteo de casos y Momento 0, reemplaza el cierre especial de
 auditoría de SPEC2), [SPEC4.md](SPEC4.md) (pista privada de auditoría vía salas de Socket.io) y
 [SPEC5.md](SPEC5.md) (catálogo sin restricción de ronda, categoría "políticas" y segundo
-proyector de noticias) — cada documento extiende o corrige al anterior, en ese orden.
+proyector de noticias), [SPEC6.md](SPEC6.md) (grilla 2x2 con 2 pistas por caso, bloqueo de
+cartas entre rondas, bienvenida por equipo en la Ronda 0) y [SPEC7.md](SPEC7.md) (corrige
+SPEC6: el acento visual de las noticias indica de dónde viene la información, no cuál es la
+pista real; reemplaza por completo el contenido de noticias de SPEC5/SPEC6) — cada documento
+extiende o corrige al anterior, en ese orden.
 
 ## Uso
 
