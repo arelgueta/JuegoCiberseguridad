@@ -37,7 +37,7 @@ function getEquipo(id) {
 }
 
 const crearEquipoTx = db.transaction((nombre) => {
-  const info = db.prepare('INSERT INTO equipos (nombre) VALUES (?)').run(nombre);
+  const info = db.prepare('INSERT INTO equipos (nombre, presupuesto, reputacion) VALUES (?, 30, 20)').run(nombre);
   const equipoId = info.lastInsertRowid;
   const seedVulnerabilidad = db.prepare(
     'INSERT OR IGNORE INTO vulnerabilidades (equipo_id, categoria, vulnerable_desde_caso) VALUES (?, ?, NULL)'
@@ -76,7 +76,7 @@ const reiniciarPartidaTx = db.transaction(() => {
   db.prepare('DELETE FROM reacciones').run();
   db.prepare('DELETE FROM pistas_auditoria').run();
   db.prepare('UPDATE vulnerabilidades SET vulnerable_desde_caso = NULL').run();
-  db.prepare('UPDATE equipos SET presupuesto = 20, reputacion = 20').run();
+  db.prepare('UPDATE equipos SET presupuesto = 30, reputacion = 20').run();
   sesion.reiniciarSesion();
 });
 
@@ -104,6 +104,13 @@ function listNoticiasPorCaso(casoNumero) {
 
 function listHerramientas() {
   return db.prepare('SELECT * FROM herramientas ORDER BY categoria, nombre').all();
+}
+
+// SPEC8.md: una carta de nivel 2/3 no debe aparecer en absoluto (no solo deshabilitada)
+// hasta que el equipo tenga registrado el uso de la carta de la que depende.
+function catalogoVisiblePorEquipo(equipoId) {
+  const compradas = new Set(listComprasPorEquipo(equipoId));
+  return listHerramientas().filter((h) => !h.requiere || compradas.has(h.requiere));
 }
 
 function getHerramienta(id) {
@@ -162,6 +169,8 @@ function usarHerramienta(equipoId, herramientaId) {
   let pista = null;
   if (herramientaId === 'programa-auditoria-interna') {
     pista = pistas.generarPista(equipoId);
+  } else if (herramientaId === 'auditoria-automatizacion-reportes') {
+    pista = pistas.ampliarPistaConSegundaCategoria(equipoId);
   }
   return { equipo, pista };
 }
@@ -174,6 +183,7 @@ module.exports = {
   reiniciarPartida,
   borrarTodo,
   listHerramientas,
+  catalogoVisiblePorEquipo,
   getHerramienta,
   listComprasPorEquipo,
   listNoticiasPorCaso,

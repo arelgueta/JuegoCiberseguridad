@@ -105,6 +105,11 @@ if (!columnasHerramientas.includes('bono_reputacion')) {
   db.exec('ALTER TABLE herramientas ADD COLUMN bono_reputacion INTEGER');
 }
 
+const columnasPistas = db.prepare('PRAGMA table_info(pistas_auditoria)').all().map((c) => c.name);
+if (!columnasPistas.includes('categoria_sugerida_2')) {
+  db.exec('ALTER TABLE pistas_auditoria ADD COLUMN categoria_sugerida_2 TEXT');
+}
+
 const columnasNoticias = db.prepare("PRAGMA table_info(noticias)").all().map((c) => c.name);
 if (!columnasNoticias.includes('fuente')) {
   db.exec("ALTER TABLE noticias ADD COLUMN fuente TEXT NOT NULL DEFAULT 'mundo'");

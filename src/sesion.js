@@ -99,11 +99,31 @@ function tieneHerramienta(equipoId, herramientaId) {
     .get(equipoId, herramientaId);
 }
 
+// Cubre Preventiva desde SPEC8.md: tener solo el nivel 1 del árbol no alcanza, hace falta
+// nivel 2 o superior (una carta de nivel 2, 3-A o 3-B) de esa categoría.
 function tieneCategoria(equipoId, categoria) {
   return !!db
     .prepare(
       `SELECT 1 FROM compras c JOIN herramientas h ON h.id = c.herramienta_id
-       WHERE c.equipo_id = ? AND h.categoria = ?`
+       WHERE c.equipo_id = ? AND h.categoria = ? AND h.nivel IN ('2', '3-A', '3-B')`
+    )
+    .get(equipoId, categoria);
+}
+
+function obtenerCarta3A(equipoId, categoria) {
+  return db
+    .prepare(
+      `SELECT h.* FROM compras c JOIN herramientas h ON h.id = c.herramienta_id
+       WHERE c.equipo_id = ? AND h.categoria = ? AND h.nivel = '3-A'`
+    )
+    .get(equipoId, categoria);
+}
+
+function tiene3BDeCategoria(equipoId, categoria) {
+  return !!db
+    .prepare(
+      `SELECT 1 FROM compras c JOIN herramientas h ON h.id = c.herramienta_id
+       WHERE c.equipo_id = ? AND h.categoria = ? AND h.nivel = '3-B'`
     )
     .get(equipoId, categoria);
 }
@@ -132,6 +152,10 @@ function calcularResolucion(equipo, caso, rondaNumero) {
   if (tieneCategoria(equipo.id, categoria)) {
     ruta = 'preventiva';
     deltaReputacion = caso.preventiva_reputacion;
+    const carta3A = obtenerCarta3A(equipo.id, categoria);
+    if (carta3A && carta3A.bono_reputacion) {
+      deltaReputacion += carta3A.bono_reputacion;
+    }
     vulnerableFinal = false;
   } else if (reacciono(equipo.id, rondaNumero)) {
     ruta = 'reactiva';
@@ -144,7 +168,8 @@ function calcularResolucion(equipo, caso, rondaNumero) {
     let p = caso.omision_presupuesto;
     let r = caso.omision_reputacion;
     const tieneComite = tieneHerramienta(equipo.id, 'comite-gobierno');
-    if (yaVulnerable && !tieneComite) {
+    const tiene3BLocal = tiene3BDeCategoria(equipo.id, categoria);
+    if (yaVulnerable && !tieneComite && !tiene3BLocal) {
       p *= 2;
       r *= 2;
     }
