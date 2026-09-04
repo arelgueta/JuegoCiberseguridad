@@ -393,6 +393,14 @@ form.formulario label {
 
 .noticias-grid {
   display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.bienvenida-grid {
+  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1rem;
   margin-top: 1.5rem;
@@ -402,6 +410,25 @@ form.formulario label {
   background: #fff;
   border-radius: 10px;
   padding: 1.25rem;
+  border: 2px solid transparent;
+}
+
+.noticia-mundo {
+  background: #fff;
+}
+
+.noticia-interna {
+  background: #FBF3DC;
+  border-color: #8A6D1E;
+}
+
+.noticia-etiqueta {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  opacity: 0.75;
+  margin-bottom: 0.5rem;
 }
 
 .noticia-titulo {

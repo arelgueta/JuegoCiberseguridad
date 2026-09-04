@@ -99,6 +99,11 @@ if (!columnasHerramientas.includes('requiere')) {
   db.exec('ALTER TABLE herramientas ADD COLUMN requiere TEXT');
 }
 
+const columnasNoticias = db.prepare("PRAGMA table_info(noticias)").all().map((c) => c.name);
+if (!columnasNoticias.includes('fuente')) {
+  db.exec("ALTER TABLE noticias ADD COLUMN fuente TEXT NOT NULL DEFAULT 'mundo'");
+}
+
 db.prepare('INSERT OR IGNORE INTO sesion (id) VALUES (1)').run();
 
 // Las 7 categorías de amenaza que participan del seguimiento de vulnerabilidades y de los
@@ -142,61 +147,68 @@ const CASOS = [
   { numero: 10, categoria: 'auditoria', titulo: 'Auditoría de cumplimiento sin previo aviso', costo_reactiva: 4, omision_presupuesto: -4, omision_reputacion: -5 },
 ];
 
-// 4 noticias por caso (reutilizadas tal cual de brecha-diapositivas.html, noticiasPorCaso,
-// re-indexado por número de caso: noticiasPorCaso[0] -> caso 1, ..., [8] -> caso 9). El bloque
-// de noticias del caso 10 se reescribió porque el viejo caso 10 especial de SPEC2 ya no existe
-// (SPEC3 lo reemplazó por 'Auditoría de cumplimiento sin previo aviso'); ese contenido nuevo
-// sale tal cual de la tabla de SPEC5.md.
+// Contenido de SPEC7.md: reemplaza por completo las tablas de noticias de SPEC5.md y
+// SPEC6.md (no se suma). 4 noticias por caso: 1 pista-mundo, 1 pista-interna, 1 señuelo-mundo,
+// 1 señuelo-interna. `fuente` indica de dónde viene la información ('mundo' | 'interna'), no
+// si es verdadera — esa distinción (es_pista) nunca se muestra en /proyector-noticias.
+//
+// El caso 9 señuelo-mundo se reescribió respecto del texto literal de SPEC7.md: tal cual venía
+// ("Encuesta revela que la mayoría reutiliza contraseñas") es idéntico, palabra por palabra, al
+// señuelo-mundo del caso 1 — el mismo problema de titulares repetidos entre casos que ya
+// habíamos corregido en SPEC5.md, y que el sorteo de SPEC3.md puede volver a juntar en una
+// misma partida. Mismo criterio ya acordado: se mantiene intacta la aparición más temprana
+// (caso 1) y se reescribe la más nueva (caso 9), mismo tema, otra redacción. Verificado que el
+// resto de las 40 noticias no tiene ningún otro título repetido.
 const NOTICIAS = [
-  { caso_numero: 1, titulo: 'Alertan sobre fraudes de suplantación de correo corporativo (BEC)', descripcion: 'Una cámara empresarial reporta un aumento del 40% en fraudes de tipo BEC dirigidos a áreas de finanzas en el último trimestre.', es_pista: 1 },
-  { caso_numero: 1, titulo: 'Encuesta revela que la mayoría reutiliza contraseñas', descripcion: 'Un estudio de hábitos digitales encuentra que 6 de cada 10 personas usa la misma contraseña en varios servicios.', es_pista: 0 },
-  { caso_numero: 1, titulo: 'Circulan videos manipulados con IA pidiendo donaciones', descripcion: 'Se reportan casos de videos que suplantan a directivos de empresas para pedir transferencias a billeteras cripto.', es_pista: 0 },
-  { caso_numero: 1, titulo: 'Consultora publica su informe anual de tendencias en ciberseguridad', descripcion: 'El reporte identifica al error humano como el factor más frecuente en los incidentes reportados este año.', es_pista: 0 },
+  { caso_numero: 1, titulo: 'Alertan sobre fraudes de suplantación de correo corporativo (BEC)', descripcion: 'Una cámara empresarial reporta un aumento del 40% en fraudes de tipo BEC dirigidos a áreas de finanzas en el último trimestre.', es_pista: 1, fuente: 'mundo' },
+  { caso_numero: 1, titulo: 'Mesa de ayuda registra varios tickets por correos sospechosos', descripcion: 'Varios empleados reportaron mensajes que simulan ser de un directivo, pidiendo aprobar una transferencia antes de fin de día.', es_pista: 1, fuente: 'interna' },
+  { caso_numero: 1, titulo: 'Encuesta revela que la mayoría reutiliza contraseñas', descripcion: 'Un estudio de hábitos digitales encuentra que 6 de cada 10 personas usa la misma contraseña en varios servicios.', es_pista: 0, fuente: 'mundo' },
+  { caso_numero: 1, titulo: 'Recursos Humanos recibe consultas sobre un video que circula entre el personal', descripcion: 'Algunos empleados preguntan si es real un video viral que pide donar dinero a una causa urgente.', es_pista: 0, fuente: 'interna' },
 
-  { caso_numero: 2, titulo: 'Foro clandestino ofrece millones de credenciales filtradas', descripcion: 'Se detecta la venta de una base de datos combinada con credenciales de distintos servicios online.', es_pista: 1 },
-  { caso_numero: 2, titulo: 'Aviso urgente por una vulnerabilidad crítica ya explotada', descripcion: 'Se publica un CVE de severidad alta que ya está siendo aprovechado por atacantes en distintos países.', es_pista: 0 },
-  { caso_numero: 2, titulo: 'Un comunicado falso con el logo de una empresa se viraliza', descripcion: 'Antes de ser desmentido, el comunicado genera cancelaciones de contratos por parte de clientes.', es_pista: 0 },
-  { caso_numero: 2, titulo: 'Detectan código malicioso oculto en una actualización de software', descripcion: 'Analistas identifican instrucciones no documentadas agregadas a un componente ampliamente utilizado por empresas.', es_pista: 0 },
+  { caso_numero: 2, titulo: 'Foro clandestino ofrece millones de credenciales filtradas', descripcion: 'Se detecta la venta de una base de datos combinada con credenciales de distintos servicios online.', es_pista: 1, fuente: 'mundo' },
+  { caso_numero: 2, titulo: 'Sistemas nota un pico de intentos de inicio de sesión fallidos', descripcion: 'Varios usuarios reportan bloqueos temporales de sus cuentas sin haberlo intentado ellos mismos.', es_pista: 1, fuente: 'interna' },
+  { caso_numero: 2, titulo: 'Aviso urgente por una vulnerabilidad crítica ya explotada', descripcion: 'Se publica un CVE de severidad alta que ya está siendo aprovechado por atacantes en distintos países.', es_pista: 0, fuente: 'mundo' },
+  { caso_numero: 2, titulo: 'Comunicación interna recibe consultas sobre un aviso que circula afuera', descripcion: 'Algunos clientes preguntan si es real un comunicado que menciona el cierre de operaciones.', es_pista: 0, fuente: 'interna' },
 
-  { caso_numero: 3, titulo: 'Documentan estafas telefónicas con voz clonada por IA', descripcion: 'Un caso reciente muestra cómo estafadores replican la voz de un directivo para pedir transferencias urgentes.', es_pista: 1 },
-  { caso_numero: 3, titulo: 'Un banco advierte sobre correos que imitan sus notificaciones', descripcion: 'Se detectan campañas de phishing que copian el diseño exacto de los avisos oficiales del banco.', es_pista: 0 },
-  { caso_numero: 3, titulo: 'Hospital regional reporta interrupción de sistemas', descripcion: 'Un ataque que cifra archivos deja fuera de servicio varios sistemas administrativos durante horas.', es_pista: 0 },
-  { caso_numero: 3, titulo: 'Anuncian una nueva certificación internacional en seguridad', descripcion: 'La certificación busca estandarizar competencias para profesionales del área a nivel regional.', es_pista: 0 },
+  { caso_numero: 3, titulo: 'Documentan estafas telefónicas con voz clonada por IA', descripcion: 'Un caso reciente muestra cómo estafadores replican la voz de un directivo para pedir transferencias urgentes.', es_pista: 1, fuente: 'mundo' },
+  { caso_numero: 3, titulo: 'Finanzas reporta una llamada pidiendo una transferencia urgente', descripcion: 'Un empleado duda de la identidad de quien llamó, pese a reconocer la voz.', es_pista: 1, fuente: 'interna' },
+  { caso_numero: 3, titulo: 'Un banco advierte sobre correos que imitan sus notificaciones', descripcion: 'Se detectan campañas de phishing que copian el diseño exacto de los avisos oficiales del banco.', es_pista: 0, fuente: 'mundo' },
+  { caso_numero: 3, titulo: 'Sistemas reporta lentitud en los servidores esta mañana', descripcion: 'Todavía no se identifica la causa; podría tratarse de mantenimiento programado.', es_pista: 0, fuente: 'interna' },
 
-  { caso_numero: 4, titulo: 'Especialistas insisten en probar restauraciones reales de backups', descripcion: 'Tener copias de seguridad no alcanza: recomiendan simulacros periódicos de recuperación completa.', es_pista: 1 },
-  { caso_numero: 4, titulo: 'Recomiendan pasar a llaves de acceso para reducir robo de contraseñas', descripcion: 'Las passkeys eliminan la necesidad de recordar contraseñas y reducen el riesgo de phishing de credenciales.', es_pista: 0 },
-  { caso_numero: 4, titulo: 'Una red de cuentas automatizadas impulsa una tendencia falsa en redes', descripcion: 'El comportamiento coordinado de las publicaciones apunta a una campaña orquestada contra la imagen de una empresa.', es_pista: 0 },
-  { caso_numero: 4, titulo: 'Auditoría revela un almacenamiento en la nube mal configurado', descripcion: 'Datos de clientes estuvieron accesibles públicamente durante varias semanas antes de detectarse.', es_pista: 0 },
+  { caso_numero: 4, titulo: 'Especialistas insisten en probar restauraciones reales de backups', descripcion: 'Tener copias de seguridad no alcanza: recomiendan simulacros periódicos de recuperación completa.', es_pista: 1, fuente: 'mundo' },
+  { caso_numero: 4, titulo: 'Un empleado reporta no poder acceder a archivos compartidos', descripcion: 'El equipo de sistemas está revisando si se trata de una falla puntual.', es_pista: 1, fuente: 'interna' },
+  { caso_numero: 4, titulo: 'Recomiendan pasar a llaves de acceso para reducir robo de contraseñas', descripcion: 'Las passkeys eliminan la necesidad de recordar contraseñas y reducen el riesgo de phishing de credenciales.', es_pista: 0, fuente: 'mundo' },
+  { caso_numero: 4, titulo: 'Marketing consulta por comentarios negativos que aparecieron de golpe en redes', descripcion: 'No está claro todavía si se trata de una campaña organizada o pura casualidad.', es_pista: 0, fuente: 'interna' },
 
-  { caso_numero: 5, titulo: 'Una herramienta gratuita de voz con IA se vuelve tendencia', descripcion: 'La app permite imitar voces conocidas con solo unos segundos de audio de referencia.', es_pista: 1 },
-  { caso_numero: 5, titulo: 'Un impostor ingresa a una oficina siguiendo a un empleado', descripcion: 'El caso, capturado por cámaras de seguridad, reabre el debate sobre el control de acceso físico.', es_pista: 0 },
-  { caso_numero: 5, titulo: 'Proveedor externo con acceso a APIs sufre una filtración', descripcion: 'Las credenciales comprometidas también daban acceso a sistemas de sus clientes.', es_pista: 0 },
-  { caso_numero: 5, titulo: 'Un evento de la industria debate el futuro de la inteligencia artificial', descripcion: 'Especialistas discuten oportunidades y riesgos de la adopción acelerada de IA en las empresas.', es_pista: 0 },
+  { caso_numero: 5, titulo: 'Una herramienta gratuita de voz con IA se vuelve tendencia', descripcion: 'La app permite imitar voces conocidas con solo unos segundos de audio de referencia.', es_pista: 1, fuente: 'mundo' },
+  { caso_numero: 5, titulo: 'Tesorería recibe una consulta sobre una transferencia a una billetera cripto', descripcion: 'Alguien solicitó el pago mostrando un video del director que nadie termina de reconocer del todo.', es_pista: 1, fuente: 'interna' },
+  { caso_numero: 5, titulo: 'Un impostor ingresa a una oficina siguiendo a un empleado', descripcion: 'El caso, capturado por cámaras de seguridad, reabre el debate sobre el control de acceso físico.', es_pista: 0, fuente: 'mundo' },
+  { caso_numero: 5, titulo: 'Compras pregunta si hay que avisarle a un proveedor sobre un problema de acceso', descripcion: 'Todavía no está confirmado si el inconveniente afecta a los sistemas propios.', es_pista: 0, fuente: 'interna' },
 
-  { caso_numero: 6, titulo: 'Recomiendan revisar permisos de cuentas de servicio olvidadas', descripcion: 'Muchas cuentas con privilegios elevados quedan activas mucho después de haber dejado de usarse.', es_pista: 1 },
-  { caso_numero: 6, titulo: 'Se detecta un aumento de dominios que imitan marcas conocidas', descripcion: 'Usan caracteres visualmente similares a los originales para engañar a quien no revisa con atención.', es_pista: 0 },
-  { caso_numero: 6, titulo: 'Crece la oferta de kits de ataque listos para usar en foros clandestinos', descripcion: 'Estos paquetes reducen la necesidad de conocimientos técnicos avanzados para lanzar una campaña de cifrado de archivos.', es_pista: 0 },
-  { caso_numero: 6, titulo: 'Aparece un perfil falso haciéndose pasar por reclutador técnico', descripcion: 'El perfil buscaba obtener información sobre la infraestructura interna de varias empresas.', es_pista: 0 },
+  { caso_numero: 6, titulo: 'Recomiendan revisar permisos de cuentas de servicio olvidadas', descripcion: 'Muchas cuentas con privilegios elevados quedan activas mucho después de haber dejado de usarse.', es_pista: 1, fuente: 'mundo' },
+  { caso_numero: 6, titulo: 'Un cliente escribe preguntando por qué pudo ver documentos que no le correspondían', descripcion: 'El equipo de soporte deriva la consulta al área técnica para revisar el caso.', es_pista: 1, fuente: 'interna' },
+  { caso_numero: 6, titulo: 'Se detecta un aumento de dominios que imitan marcas conocidas', descripcion: 'Usan caracteres visualmente similares a los originales para engañar a quien no revisa con atención.', es_pista: 0, fuente: 'mundo' },
+  { caso_numero: 6, titulo: 'Un empleado comenta que un supuesto reclutador le hizo preguntas raras', descripcion: 'No se sabe si fue una coincidencia o algo más serio; el comentario quedó en el grupo del equipo.', es_pista: 0, fuente: 'interna' },
 
-  { caso_numero: 7, titulo: 'Investigadores detectan una puerta trasera en una librería popular', descripcion: 'La última actualización de una dependencia muy usada en proyectos empresariales incluía código no autorizado.', es_pista: 1 },
-  { caso_numero: 7, titulo: 'Aumentan los intentos de acceso automatizado contra portales VPN', descripcion: 'Los ataques prueban combinaciones de usuario y contraseña obtenidas de filtraciones previas.', es_pista: 0 },
-  { caso_numero: 7, titulo: 'Un comunicado falso vuelve a circular meses después', descripcion: 'Una versión editada del rumor original reaparece en redes con nuevos detalles inventados.', es_pista: 0 },
-  { caso_numero: 7, titulo: 'Una universidad lanza un programa de becas en ciberseguridad', descripcion: 'Busca fomentar la formación de nuevos profesionales del área en los próximos cinco años.', es_pista: 0 },
+  { caso_numero: 7, titulo: 'Investigadores detectan una puerta trasera en una librería popular', descripcion: 'La última actualización de una dependencia muy usada en proyectos empresariales incluía código no autorizado.', es_pista: 1, fuente: 'mundo' },
+  { caso_numero: 7, titulo: 'Desarrollo reporta un comportamiento extraño después de la última actualización', descripcion: 'Todavía no lograron identificar si el problema viene de una dependencia externa.', es_pista: 1, fuente: 'interna' },
+  { caso_numero: 7, titulo: 'Aumentan los intentos de acceso automatizado contra portales VPN', descripcion: 'Los ataques prueban combinaciones de usuario y contraseña obtenidas de filtraciones previas.', es_pista: 0, fuente: 'mundo' },
+  { caso_numero: 7, titulo: 'RR.HH. comparte una propuesta para sumar pasantes al área técnica', descripcion: 'Todavía se está evaluando el presupuesto disponible para el programa.', es_pista: 0, fuente: 'interna' },
 
-  { caso_numero: 8, titulo: 'Un grupo ofrece su malware como servicio a otros atacantes', descripcion: 'El modelo de "ransomware como servicio" permite a grupos con menos experiencia técnica lanzar campañas propias.', es_pista: 1 },
-  { caso_numero: 8, titulo: 'Aparecen pendrives "perdidos" con logos corporativos', descripcion: 'Se encuentran en estacionamientos de varias empresas de la zona en las últimas semanas.', es_pista: 0 },
-  { caso_numero: 8, titulo: 'Un proveedor externo con acceso a sistemas sufre una filtración', descripcion: 'Las credenciales comprometidas también afectaban a las empresas que trabajaban con ese proveedor.', es_pista: 0 },
-  { caso_numero: 8, titulo: 'Empresas de logística reportan correos falsos de confirmación de envío', descripcion: 'Los mensajes incluyen enlaces que descargan software malicioso al hacer clic.', es_pista: 0 },
+  { caso_numero: 8, titulo: 'Un grupo ofrece su malware como servicio a otros atacantes', descripcion: 'El modelo de "ransomware como servicio" permite a grupos con menos experiencia técnica lanzar campañas propias.', es_pista: 1, fuente: 'mundo' },
+  { caso_numero: 8, titulo: 'Sistemas detecta un servidor con una actualización pendiente hace semanas', descripcion: 'Se está evaluando si aplicarla esta noche o esperar al próximo mantenimiento programado.', es_pista: 1, fuente: 'interna' },
+  { caso_numero: 8, titulo: 'Aparecen pendrives "perdidos" con logos corporativos', descripcion: 'Se encuentran en estacionamientos de varias empresas de la zona en las últimas semanas.', es_pista: 0, fuente: 'mundo' },
+  { caso_numero: 8, titulo: 'Un empleado de depósito pregunta por un correo de seguimiento de un pedido', descripcion: 'No recuerda haber hecho ese pedido, pero tampoco está seguro de lo contrario.', es_pista: 0, fuente: 'interna' },
 
-  { caso_numero: 9, titulo: 'Cuentas coordinadas amplifican un hashtag con información falsa', descripcion: 'El patrón de publicaciones sugiere una campaña organizada contra la reputación de una marca conocida.', es_pista: 1 },
-  { caso_numero: 9, titulo: 'Especialistas insisten en no reutilizar contraseñas entre servicios', descripcion: 'Un relevamiento reciente encuentra que la reutilización sigue siendo la práctica de mayor riesgo entre usuarios corporativos.', es_pista: 0 },
-  { caso_numero: 9, titulo: 'Se publica un aviso urgente por una vulnerabilidad crítica', descripcion: 'Distintos organismos recomiendan aplicar el parche disponible lo antes posible.', es_pista: 0 },
-  { caso_numero: 9, titulo: 'Un centro de estudios difunde su reporte anual de riesgos digitales', descripcion: 'El informe señala que los incidentes vinculados a proveedores externos siguen en aumento respecto del año anterior.', es_pista: 0 },
+  { caso_numero: 9, titulo: 'Cuentas coordinadas amplifican un hashtag con información falsa', descripcion: 'El patrón de publicaciones sugiere una campaña organizada contra la reputación de una marca conocida.', es_pista: 1, fuente: 'mundo' },
+  { caso_numero: 9, titulo: 'Atención al cliente recibe llamados preguntando si la empresa cierra', descripcion: 'Todavía no hay un comunicado oficial que lo confirme ni lo desmienta.', es_pista: 1, fuente: 'interna' },
+  { caso_numero: 9, titulo: 'Especialistas insisten en no reutilizar contraseñas entre servicios', descripcion: 'Un relevamiento reciente encuentra que la reutilización sigue siendo la práctica de mayor riesgo entre usuarios corporativos.', es_pista: 0, fuente: 'mundo' },
+  { caso_numero: 9, titulo: 'Sistemas comenta que aplicó un parche preventivo esta semana', descripcion: 'Por ahora no se relaciona con ningún incidente detectado.', es_pista: 0, fuente: 'interna' },
 
-  { caso_numero: 10, titulo: 'Reguladores anuncian inspecciones de cumplimiento sin aviso previo', descripcion: 'Distintos organismos comenzarán a realizar auditorías sorpresa para verificar el cumplimiento de normas de seguridad, sin notificar la fecha con anticipación.', es_pista: 1 },
-  { caso_numero: 10, titulo: 'Alertan sobre fraudes de suplantación de correo corporativo', descripcion: 'Se reporta un nuevo repunte de casos de BEC dirigidos a pequeñas y medianas empresas.', es_pista: 0 },
-  { caso_numero: 10, titulo: 'Documentan nuevas estafas telefónicas con voz clonada por IA', descripcion: 'Los casos reportados muestran variantes cada vez más difíciles de distinguir de una llamada real.', es_pista: 0 },
-  { caso_numero: 10, titulo: 'Un proveedor de nube anuncia nuevas certificaciones de seguridad', descripcion: 'La empresa busca reforzar la confianza de sus clientes empresariales tras incidentes recientes en el sector.', es_pista: 0 },
+  { caso_numero: 10, titulo: 'Reguladores anuncian inspecciones de cumplimiento sin aviso previo', descripcion: 'Distintos organismos comenzarán a realizar auditorías sorpresa para verificar el cumplimiento de normas de seguridad.', es_pista: 1, fuente: 'mundo' },
+  { caso_numero: 10, titulo: 'Legales pregunta si la documentación de cumplimiento está actualizada', descripcion: 'Todavía no hay fecha confirmada para una posible revisión.', es_pista: 1, fuente: 'interna' },
+  { caso_numero: 10, titulo: 'Documentan nuevas estafas telefónicas con voz clonada por IA', descripcion: 'Los casos reportados muestran variantes cada vez más difíciles de distinguir de una llamada real.', es_pista: 0, fuente: 'mundo' },
+  { caso_numero: 10, titulo: 'Compras comparte una propuesta de un proveedor con nuevas certificaciones', descripcion: 'Se está evaluando si conviene avanzar con el cambio de proveedor.', es_pista: 0, fuente: 'interna' },
 ];
 
 const seedHerramienta = db.prepare(`
@@ -222,8 +234,8 @@ const seedCaso = db.prepare(`
 `);
 
 const insertNoticia = db.prepare(`
-  INSERT INTO noticias (caso_numero, titulo, descripcion, es_pista)
-  VALUES (@caso_numero, @titulo, @descripcion, @es_pista)
+  INSERT INTO noticias (caso_numero, titulo, descripcion, es_pista, fuente)
+  VALUES (@caso_numero, @titulo, @descripcion, @es_pista, @fuente)
 `);
 
 const seedTodo = db.transaction(() => {

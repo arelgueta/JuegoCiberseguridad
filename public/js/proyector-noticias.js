@@ -2,8 +2,10 @@
   const socket = io();
   const bannerRonda = document.getElementById('banner-ronda');
   const noticiasGrid = document.getElementById('noticias-grid');
+  const bienvenidaGrid = document.getElementById('bienvenida-grid');
 
   let sesionActual = JSON.parse(document.getElementById('sesion-inicial').textContent);
+  let equiposActuales = JSON.parse(document.getElementById('equipos-iniciales').textContent);
   let casoNumeroMostrado = sesionActual.casoActivo ? sesionActual.casoActivo.numero : null;
 
   function escapeHtml(str) {
@@ -35,10 +37,10 @@
     }
     if (sesion.rondaNumero === 0) {
       bannerRonda.className = 'tarjeta-sesion';
-      bannerRonda.innerHTML = '<p class="titulo-ronda">Los equipos están decidiendo su inversión inicial</p>';
+      bannerRonda.innerHTML = '<p class="titulo-ronda">Ronda 0</p>';
       return;
     }
-    if (!sesion.casoActivo) {
+    if (sesion.rondaEstado !== 'activa' || !sesion.casoActivo) {
       bannerRonda.className = 'tarjeta-sesion';
       bannerRonda.innerHTML = '<p class="titulo-ronda">Esperando la próxima ronda...</p>';
       return;
@@ -50,6 +52,24 @@
     `;
   }
 
+  function renderBienvenida(equipos) {
+    if (!equipos || equipos.length === 0) {
+      bienvenidaGrid.hidden = true;
+      bienvenidaGrid.innerHTML = '';
+      return;
+    }
+    bienvenidaGrid.hidden = false;
+    bienvenidaGrid.innerHTML = equipos
+      .map(
+        (eq) => `
+      <div class="noticia-card">
+        <div class="noticia-titulo">${escapeHtml(eq.nombre)} incorpora su primer equipo de ciberseguridad</div>
+        <div class="noticia-desc">La dirección aprueba la creación de un área dedicada, con el presupuesto inicial ya asignado. Empieza la carrera contra el tiempo.</div>
+      </div>`
+      )
+      .join('');
+  }
+
   function renderNoticias(noticias) {
     if (!noticias || noticias.length === 0) {
       noticiasGrid.hidden = true;
@@ -58,13 +78,17 @@
     }
     noticiasGrid.hidden = false;
     noticiasGrid.innerHTML = noticias
-      .map(
-        (n) => `
-      <div class="noticia-card">
+      .map((n) => {
+        const esInterna = n.fuente === 'interna';
+        const clase = esInterna ? 'noticia-card noticia-interna' : 'noticia-card noticia-mundo';
+        const etiqueta = esInterna ? '🏢 Dentro de la empresa' : '🌐 Noticia del mundo';
+        return `
+      <div class="${clase}">
+        <div class="noticia-etiqueta">${etiqueta}</div>
         <div class="noticia-titulo">${escapeHtml(n.titulo)}</div>
         <div class="noticia-desc">${escapeHtml(n.descripcion)}</div>
-      </div>`
-      )
+      </div>`;
+      })
       .join('');
   }
 
@@ -81,6 +105,23 @@
     renderNoticias(data.noticias);
   }
 
+  function renderVista() {
+    if (sesionActual.rondaEstado === 'finalizada') {
+      bienvenidaGrid.hidden = true;
+      noticiasGrid.hidden = true;
+      return;
+    }
+    if (sesionActual.rondaNumero === 0) {
+      noticiasGrid.hidden = true;
+      noticiasGrid.innerHTML = '';
+      renderBienvenida(equiposActuales);
+      return;
+    }
+    bienvenidaGrid.hidden = true;
+    bienvenidaGrid.innerHTML = '';
+    actualizarNoticiasSiCambio();
+  }
+
   setInterval(() => {
     const el = document.getElementById('cronometro');
     if (!el || sesionActual.rondaEstado !== 'activa') return;
@@ -89,10 +130,18 @@
 
   socket.on('estado:actualizado', (data) => {
     sesionActual = data.sesion;
+    equiposActuales = data.equipos;
     renderBanner();
-    actualizarNoticiasSiCambio();
+    renderVista();
   });
 
+  // Pintura inicial: usa lo que ya mandó el servidor, sin pedirlo de nuevo por fetch.
   renderBanner();
-  renderNoticias(JSON.parse(document.getElementById('noticias-iniciales').textContent));
+  if (sesionActual.rondaEstado !== 'finalizada') {
+    if (sesionActual.rondaNumero === 0) {
+      renderBienvenida(equiposActuales);
+    } else {
+      renderNoticias(JSON.parse(document.getElementById('noticias-iniciales').textContent));
+    }
+  }
 })();

@@ -126,6 +126,9 @@ const usarHerramientaTx = db.transaction((equipoId, herramientaId) => {
   if (!herramienta) {
     throw new Error('Herramienta no encontrada.');
   }
+  if (sesion.getSesionRaw().ronda_estado !== 'activa') {
+    throw new Error('Esperando a que el docente inicie la próxima ronda.');
+  }
   if (herramienta.requiere) {
     const tieneRequisito = db
       .prepare('SELECT 1 FROM compras WHERE equipo_id = ? AND herramienta_id = ?')

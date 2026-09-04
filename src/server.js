@@ -216,13 +216,13 @@ app.get('/proyector', (req, res) => {
 });
 
 function noticiasPublicas(casoNumero) {
-  return q.listNoticiasPorCaso(casoNumero).map((n) => ({ titulo: n.titulo, descripcion: n.descripcion }));
+  return q.listNoticiasPorCaso(casoNumero).map((n) => ({ titulo: n.titulo, descripcion: n.descripcion, fuente: n.fuente }));
 }
 
 app.get('/proyector-noticias', (req, res) => {
   const sesion = sesionMod.getSesionPublica();
   const noticias = sesion.casoActivo ? noticiasPublicas(sesion.casoActivo.numero) : [];
-  res.render('proyector-noticias', { sesion, noticias });
+  res.render('proyector-noticias', { sesion, noticias, equipos: q.listEquipos() });
 });
 
 app.get('/api/noticias/:casoNumero', (req, res) => {

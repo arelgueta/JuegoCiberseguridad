@@ -10,11 +10,13 @@
   <header class="app-header"><h1>BRECHA — Noticias del mundo</h1></header>
   <main>
     <div id="banner-ronda" class="tarjeta-sesion"></div>
-    <div id="noticias-grid" class="noticias-grid"></div>
+    <div id="bienvenida-grid" class="bienvenida-grid" hidden></div>
+    <div id="noticias-grid" class="noticias-grid" hidden></div>
   </main>
 
   <script id="sesion-inicial" type="application/json"><%- JSON.stringify(sesion) %></script>
   <script id="noticias-iniciales" type="application/json"><%- JSON.stringify(noticias) %></script>
+  <script id="equipos-iniciales" type="application/json"><%- JSON.stringify(equipos) %></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/proyector-noticias.js"></script>
 </body>

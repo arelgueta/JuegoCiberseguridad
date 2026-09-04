@@ -171,7 +171,10 @@
       const requiere = card.dataset.requiere || null;
       const btn = card.querySelector('.btn-utilizar');
 
-      if (equipo.herramientas.includes(id)) {
+      if (sesionActual.rondaEstado !== 'activa') {
+        btn.disabled = true;
+        btn.textContent = 'Esperando a que el docente inicie la próxima ronda';
+      } else if (equipo.herramientas.includes(id)) {
         btn.disabled = true;
         btn.textContent = 'Ya la estás utilizando';
       } else if (requiere && !equipo.herramientas.includes(requiere)) {
