@@ -68,7 +68,7 @@
       bannerRonda.innerHTML = `
         <p class="titulo-ronda">Momento 0</p>
         <p class="cronometro" id="cronometro">--:--</p>
-        <p>Usá tus cartas fundacionales del catálogo mientras dure el cronómetro.</p>
+        <p>Elegí en qué invertir usando el catálogo completo mientras dure el cronómetro.</p>
       `;
       return;
     }
@@ -168,16 +168,12 @@
     document.querySelectorAll('.herramienta-card').forEach((card) => {
       const id = card.dataset.id;
       const costo = Number(card.dataset.costo);
-      const categoria = card.dataset.categoria;
       const requiere = card.dataset.requiere || null;
       const btn = card.querySelector('.btn-utilizar');
 
       if (equipo.herramientas.includes(id)) {
         btn.disabled = true;
         btn.textContent = 'Ya la estás utilizando';
-      } else if (categoria === 'fundacion' && !(sesionActual.rondaNumero === 0 && sesionActual.rondaEstado === 'activa')) {
-        btn.disabled = true;
-        btn.textContent = 'Disponible solo en el Momento 0';
       } else if (requiere && !equipo.herramientas.includes(requiere)) {
         const info = herramientasPorId.get(requiere);
         btn.disabled = true;

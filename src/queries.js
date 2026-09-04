@@ -122,9 +122,6 @@ const usarHerramientaTx = db.transaction((equipoId, herramientaId) => {
   if (!herramienta) {
     throw new Error('Herramienta no encontrada.');
   }
-  if (herramienta.categoria === 'fundacion' && !sesion.puedeUsarFundacion()) {
-    throw new Error('Las cartas de Momento 0 solo se pueden utilizar durante esa ronda.');
-  }
   if (herramienta.requiere) {
     const tieneRequisito = db
       .prepare('SELECT 1 FROM compras WHERE equipo_id = ? AND herramienta_id = ?')

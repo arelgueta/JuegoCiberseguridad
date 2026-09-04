@@ -94,7 +94,7 @@ if (!columnasHerramientas.includes('requiere')) {
 db.prepare('INSERT OR IGNORE INTO sesion (id) VALUES (1)').run();
 
 // Las 7 categorías de amenaza que participan del seguimiento de vulnerabilidades y de los
-// casos sorteables. 'general' y 'fundacion' no son categorías de amenaza (ver SPEC3/SPEC4).
+// casos sorteables. 'general' y 'politicas' no son categorías de amenaza (ver SPEC3/SPEC4).
 const CATEGORIAS_AMENAZA = ['phishing', 'pass', 'social', 'ransom', 'fake', 'cloud', 'auditoria'];
 
 const CATALOGO_HERRAMIENTAS = [
@@ -115,10 +115,10 @@ const CATALOGO_HERRAMIENTAS = [
   { id: 'escaneo-dependencias', categoria: 'cloud', nombre: 'Escaneo de dependencias (SBOM)', costo: 2, descripcion: 'Verifica la integridad de librerías externas antes de actualizar.', requiere: null },
   { id: 'plan-respuesta-incidentes', categoria: 'general', nombre: 'Plan de respuesta a incidentes', costo: 4, descripcion: 'Reduce en 1 unidad el costo de emergencia de cualquier categoría.', requiere: null },
   { id: 'programa-auditoria-interna', categoria: 'auditoria', nombre: 'Programa de auditoría interna', costo: 3, descripcion: 'Revisiones periódicas que detectan y corrigen brechas antes de que las encuentre un auditor externo.', requiere: null },
-  { id: 'relevamiento-ti', categoria: 'fundacion', nombre: 'Relevamiento de TI', costo: 2, descripcion: 'Sin efecto propio en presupuesto/reputación. Habilita utilizar Gestión de riesgos.', requiere: null },
-  { id: 'gestion-riesgos', categoria: 'fundacion', nombre: 'Gestión de riesgos', costo: 3, descripcion: 'Mientras se tenga: reduce un 30% cualquier penalización de Omisión (presupuesto y reputación, en cualquier categoría).', requiere: 'relevamiento-ti' },
-  { id: 'siem', categoria: 'fundacion', nombre: 'Incorporación de SIEM', costo: 4, descripcion: 'Mientras se tenga: cualquier caso que hubiera terminado en Omisión se resuelve como Reactiva sin cobrar el costo de emergencia.', requiere: null },
-  { id: 'comite-gobierno', categoria: 'fundacion', nombre: 'Comité de gobierno de seguridad', costo: 2, descripcion: 'Mientras se tenga: el duplicado por categoría vulnerable repetida nunca se aplica para este equipo.', requiere: null },
+  { id: 'relevamiento-ti', categoria: 'politicas', nombre: 'Relevamiento de TI', costo: 2, descripcion: 'Sin efecto propio en presupuesto/reputación. Habilita utilizar Gestión de riesgos.', requiere: null },
+  { id: 'gestion-riesgos', categoria: 'politicas', nombre: 'Gestión de riesgos', costo: 3, descripcion: 'Mientras se tenga: reduce un 30% cualquier penalización de Omisión (presupuesto y reputación, en cualquier categoría).', requiere: 'relevamiento-ti' },
+  { id: 'siem', categoria: 'politicas', nombre: 'Incorporación de SIEM', costo: 4, descripcion: 'Mientras se tenga: cualquier caso que hubiera terminado en Omisión se resuelve como Reactiva sin cobrar el costo de emergencia.', requiere: null },
+  { id: 'comite-gobierno', categoria: 'politicas', nombre: 'Comité de gobierno de seguridad', costo: 2, descripcion: 'Mientras se tenga: el duplicado por categoría vulnerable repetida nunca se aplica para este equipo.', requiere: null },
 ];
 
 const CASOS = [

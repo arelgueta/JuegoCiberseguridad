@@ -7,7 +7,7 @@ const CATEGORIAS = {
   cloud: { nombre: 'Nube / terceros', color: '#0F6E56', fondo: '#E1F5EE' },
   general: { nombre: 'General', color: '#3B6D11', fondo: '#EAF3DE' },
   auditoria: { nombre: 'Auditoría', color: '#A32D2D', fondo: '#FCEBEB' },
-  fundacion: { nombre: 'Momento 0', color: '#5F5E5A', fondo: '#F1EFE8' },
+  politicas: { nombre: 'Políticas', color: '#5F5E5A', fondo: '#F1EFE8' },
 };
 
 module.exports = { CATEGORIAS };

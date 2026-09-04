@@ -295,11 +295,6 @@ function reaccionar(equipoId) {
   return db.prepare('SELECT * FROM equipos WHERE id = ?').get(equipoId);
 }
 
-function puedeUsarFundacion() {
-  const sesion = getSesionRaw();
-  return sesion.ronda_numero === 0 && sesion.ronda_estado === 'activa';
-}
-
 function reiniciarSesion() {
   db.prepare(
     `UPDATE sesion SET caso_actual = NULL, ronda_estado = 'inactiva', ronda_inicio = NULL,
@@ -321,6 +316,5 @@ module.exports = {
   reaccionar,
   reacciono,
   tieneCategoria,
-  puedeUsarFundacion,
   reiniciarSesion,
 };
