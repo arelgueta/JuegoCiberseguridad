@@ -1,7 +1,10 @@
 # JuegoCiberseguridad
 
-BRECHA — servidor en vivo para la simulación de ciberseguridad de clase. Ver [SPEC.md](SPEC.md)
-para el detalle funcional de esta fase.
+BRECHA — servidor en vivo para la simulación de ciberseguridad de clase. El detalle funcional
+está repartido en [SPEC.md](SPEC.md) (Fase 1: MVP), [SPEC2.md](SPEC2.md) (Fase 2: rondas con
+cronómetro), [SPEC3.md](SPEC3.md) (sorteo de casos y Momento 0, reemplaza el cierre especial de
+auditoría de SPEC2) y [SPEC4.md](SPEC4.md) (pista privada de auditoría vía salas de Socket.io) —
+cada documento extiende o corrige al anterior, en ese orden.
 
 ## Uso
 
