@@ -9,6 +9,7 @@
 <body>
   <header class="app-header"><h1>BRECHA — Elegí tu equipo</h1></header>
   <main>
+    <% if (error) { %><div class="mensaje error"><%= error %></div><% } %>
     <div class="equipo-selector" id="equipo-selector"></div>
   </main>
 

@@ -13,7 +13,9 @@ function tieneAlgunaVulnerable(equipoId) {
 }
 
 function listEquipos() {
-  const equipos = db.prepare('SELECT * FROM equipos ORDER BY nombre').all();
+  const equipos = db.prepare(
+    'SELECT id, nombre, presupuesto, reputacion, creado_en FROM equipos ORDER BY nombre'
+  ).all();
   const compras = db.prepare('SELECT equipo_id, herramienta_id FROM compras').all();
   const herramientasPorEquipo = new Map();
   for (const c of compras) {
@@ -36,8 +38,19 @@ function getEquipo(id) {
   return db.prepare('SELECT * FROM equipos WHERE id = ?').get(id);
 }
 
-const crearEquipoTx = db.transaction((nombre) => {
-  const info = db.prepare('INSERT INTO equipos (nombre, presupuesto, reputacion) VALUES (?, 30, 20)').run(nombre);
+function getDocentePasswordHash() {
+  return db.prepare('SELECT docente_password_hash FROM configuracion WHERE id = 1').get()
+    .docente_password_hash;
+}
+
+function setDocentePasswordHash(passwordHash) {
+  db.prepare('UPDATE configuracion SET docente_password_hash = ? WHERE id = 1').run(passwordHash);
+}
+
+const crearEquipoTx = db.transaction((nombre, passwordHash) => {
+  const info = db.prepare(
+    'INSERT INTO equipos (nombre, password_hash, presupuesto, reputacion) VALUES (?, ?, 30, 20)'
+  ).run(nombre, passwordHash);
   const equipoId = info.lastInsertRowid;
   const seedVulnerabilidad = db.prepare(
     'INSERT OR IGNORE INTO vulnerabilidades (equipo_id, categoria, vulnerable_desde_caso) VALUES (?, ?, NULL)'
@@ -48,12 +61,15 @@ const crearEquipoTx = db.transaction((nombre) => {
   return equipoId;
 });
 
-function crearEquipo(nombre) {
+function crearEquipo(nombre, passwordHash) {
   const nombreLimpio = String(nombre || '').trim();
   if (!nombreLimpio) {
     throw new Error('El nombre del equipo no puede estar vacío.');
   }
-  const equipoId = crearEquipoTx(nombreLimpio);
+  if (!passwordHash) {
+    throw new Error('La contraseña del equipo es obligatoria.');
+  }
+  const equipoId = crearEquipoTx(nombreLimpio, passwordHash);
   return getEquipo(equipoId);
 }
 
@@ -68,6 +84,14 @@ function editarEquipo(id, { presupuesto, reputacion }) {
     id
   );
   return getEquipo(id);
+}
+
+function cambiarPassword(id, passwordHash) {
+  const equipo = getEquipo(id);
+  if (!equipo) {
+    throw new Error('Equipo no encontrado.');
+  }
+  db.prepare('UPDATE equipos SET password_hash = ? WHERE id = ?').run(passwordHash, id);
 }
 
 const reiniciarPartidaTx = db.transaction(() => {
@@ -178,8 +202,11 @@ function usarHerramienta(equipoId, herramientaId) {
 module.exports = {
   listEquipos,
   getEquipo,
+  getDocentePasswordHash,
+  setDocentePasswordHash,
   crearEquipo,
   editarEquipo,
+  cambiarPassword,
   reiniciarPartida,
   borrarTodo,
   listHerramientas,

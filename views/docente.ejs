@@ -9,15 +9,35 @@
 <body>
   <header class="app-header"><h1>BRECHA — Panel del docente</h1></header>
   <main>
+  <% if (!autenticado) { %>
+    <h2><%= configurada ? 'Acceso docente' : 'Registrar contraseña docente' %></h2>
+    <% if (error) { %><div class="mensaje error"><%= error %></div><% } %>
+    <form action="<%= configurada ? '/docente/login' : '/docente/registrar' %>" method="post" class="formulario">
+      <label>Contraseña
+        <input type="password" name="password" required autofocus>
+      </label>
+      <% if (!configurada) { %>
+      <label>Repetir contraseña
+        <input type="password" name="confirmacion" required>
+      </label>
+      <% } %>
+      <button type="submit"><%= configurada ? 'Ingresar' : 'Registrar contraseña' %></button>
+    </form>
+  <% } else { %>
     <div id="mensaje"></div>
+
+    <form action="/docente/logout" method="post" class="formulario">
+      <button type="submit">Cerrar sesión</button>
+    </form>
 
     <h2>Sesión</h2>
     <div id="panel-sesion" class="panel-sesion"></div>
 
     <h2>Equipos</h2>
+    <div id="credencial-generada" class="mensaje exito" hidden></div>
     <table id="tabla-equipos">
       <thead>
-        <tr><th>Equipo</th><th>Presupuesto</th><th>Reputación</th><th></th></tr>
+        <tr><th>Equipo</th><th>Presupuesto</th><th>Reputación</th><th></th><th></th></tr>
       </thead>
       <tbody></tbody>
     </table>
@@ -41,12 +61,15 @@
       </label>
       <button id="btn-borrar-todo" class="peligro" type="button" disabled>Borrar todo (elimina los equipos)</button>
     </div>
+  <% } %>
   </main>
 
+  <% if (autenticado) { %>
   <script id="equipos-iniciales" type="application/json"><%- JSON.stringify(equipos) %></script>
   <script id="sesion-inicial" type="application/json"><%- JSON.stringify(sesion) %></script>
   <script id="casos-info" type="application/json"><%- JSON.stringify(casos) %></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/docente.js"></script>
+  <% } %>
 </body>
 </html>

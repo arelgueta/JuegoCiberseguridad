@@ -9,11 +9,24 @@ proyector de noticias), [SPEC6.md](SPEC6.md) (grilla 2x2 con 2 pistas por caso, 
 cartas entre rondas, bienvenida por equipo en la Ronda 0), [SPEC7.md](SPEC7.md) (corrige
 SPEC6: el acento visual de las noticias indica de dónde viene la información, no cuál es la
 pista real; reemplaza por completo el contenido de noticias de SPEC5/SPEC6), [SPEC8.md](SPEC8.md)
-(Fase 3: árbol de desbloqueo de 3 niveles por categoría, 33 cartas, presupuesto inicial 30) y
-[SPEC9.md](SPEC9.md) (extras de Fase 3) — cada documento extiende o corrige al anterior, en
+(Fase 3: árbol de desbloqueo de 3 niveles por categoría, 33 cartas, presupuesto inicial 30),
+[SPEC9.md](SPEC9.md) (extras de Fase 3) y [SPEC10.md](SPEC10.md) (autenticación de docente y
+equipos) — cada documento extiende o corrige al anterior, en
 ese orden.
 
 ## Uso
+
+Antes de iniciar el servidor, crear un archivo `.env` local (no se commitea):
+
+```
+SESSION_SECRET=una-cadena-larga-y-aleatoria
+```
+
+Para generar automáticamente un `SESSION_SECRET` nuevo:
+
+```bash
+node -e "console.log('SESSION_SECRET=' + require('crypto').randomBytes(32).toString('hex'))" > .env
+```
 
 ```
 docker compose up
@@ -36,9 +49,3 @@ Los datos se guardan en `./data/brecha.sqlite`, que persiste aunque se reinicie 
 npm install
 npm start
 ```
-EXTRA: http://Svdor:3000/api/equipos/1/catalogo?completo=1
-
-Nt
-lv
-adc
-$2

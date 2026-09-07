@@ -1,5 +1,8 @@
 const path = require('node:path');
+const crypto = require('node:crypto');
+const bcrypt = require('bcryptjs');
 const express = require('express');
+const session = require('express-session');
 const { createServer } = require('node:http');
 const { Server } = require('socket.io');
 
@@ -10,15 +13,62 @@ const { CASOS } = require('./db');
 const { CATEGORIAS } = require('./categorias');
 
 const PORT = process.env.PORT || 3000;
+const ALFABETO_PASSWORD_EQUIPO = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
+const sessionMiddleware = session({
+  secret: process.env.SESSION_SECRET || 'brecha-dev-session-secret',
+  resave: false,
+  saveUninitialized: false,
+});
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '..', 'views'));
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(sessionMiddleware);
 app.use(express.static(path.join(__dirname, '..', 'public')));
+
+io.engine.use(sessionMiddleware);
+
+function esDocente(req) {
+  return req.session.esDocente === true;
+}
+
+function esEquipoAutenticado(req, id) {
+  return Number(req.session.equipoId) === Number(id);
+}
+
+function generarPasswordEquipo() {
+  return Array.from({ length: 6 }, () => (
+    ALFABETO_PASSWORD_EQUIPO[crypto.randomInt(ALFABETO_PASSWORD_EQUIPO.length)]
+  )).join('');
+}
+
+function equipoPublico(equipo) {
+  const { password_hash: _passwordHash, ...publico } = equipo;
+  return publico;
+}
+
+function rechazarNoAutorizado(req, res) {
+  if (req.path.startsWith('/api/')) {
+    res.status(401).json({ error: 'No autorizado.' });
+    return false;
+  }
+  res.redirect('/equipo');
+  return false;
+}
+
+function protegerDocente(req, res, next) {
+  if (!esDocente(req)) {
+    res.status(401).json({ error: 'No autorizado.' });
+    return false;
+  }
+  next();
+  return true;
+}
 
 function estadoPublico() {
   return { equipos: q.listEquipos(), sesion: sesionMod.getSesionPublica() };
@@ -32,15 +82,9 @@ io.on('connection', (socket) => {
   socket.emit('estado:actualizado', estadoPublico());
 
   socket.on('equipo:unirse', (equipoId) => {
-    const id = Number(equipoId);
+    const id = Number(socket.request.session && socket.request.session.equipoId);
     const equipo = q.getEquipo(id);
     if (!equipo) {
-      return;
-    }
-    // Sin autenticación de equipos (fuera de alcance), una conexión de socket queda atada
-    // al primer equipo con el que se identifica. Así, alguien que ya está en la sala de un
-    // equipo no puede unirse "a propósito" a la sala de otro desde la misma conexión.
-    if (socket.data.equipoId !== undefined && socket.data.equipoId !== id) {
       return;
     }
     socket.data.equipoId = id;
@@ -62,49 +106,118 @@ app.get('/salud', (req, res) => {
 });
 
 app.get('/docente', (req, res) => {
+  if (!esDocente(req)) {
+    res.render('docente', {
+      autenticado: false,
+      configurada: Boolean(q.getDocentePasswordHash()),
+      error: null,
+    });
+    return;
+  }
   res.render('docente', {
+    autenticado: true,
     equipos: q.listEquipos(),
     sesion: sesionMod.getSesionDocente(),
     casos: CASOS,
   });
 });
 
+app.post('/docente/registrar', async (req, res) => {
+  if (q.getDocentePasswordHash()) {
+    res.redirect('/docente');
+    return;
+  }
+  const password = String(req.body.password || '');
+  const confirmacion = String(req.body.confirmacion || '');
+  if (!password || password !== confirmacion) {
+    res.status(400).render('docente', {
+      autenticado: false,
+      configurada: false,
+      error: 'Las contraseñas deben coincidir y no estar vacías.',
+    });
+    return;
+  }
+  q.setDocentePasswordHash(await bcrypt.hash(password, 10));
+  req.session.esDocente = true;
+  res.redirect('/docente');
+});
+
+app.post('/docente/login', async (req, res) => {
+  const hash = q.getDocentePasswordHash();
+  if (hash && req.body.password && await bcrypt.compare(req.body.password, hash)) {
+    req.session.esDocente = true;
+    res.redirect('/docente');
+    return;
+  }
+  res.status(401).render('docente', {
+    autenticado: false,
+    configurada: true,
+    error: 'Contraseña incorrecta.',
+  });
+});
+
+app.post('/docente/logout', (req, res) => {
+  req.session.destroy(() => res.redirect('/docente'));
+});
+
 app.get('/api/sesion', (req, res) => {
+  if (!protegerDocente(req, res, () => {})) return;
   res.json(sesionMod.getSesionDocente());
 });
 
-app.post('/api/equipos', (req, res) => {
+app.post('/api/equipos', protegerDocente, async (req, res) => {
   try {
-    const equipo = q.crearEquipo(req.body.nombre);
+    const password = generarPasswordEquipo();
+    const passwordHash = await bcrypt.hash(password, 10);
+    const equipo = q.crearEquipo(req.body.nombre, passwordHash);
     emitirEstado();
-    res.json({ ok: true, equipo });
+    res.json({ ok: true, equipo: equipoPublico(equipo), password });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
-app.post('/api/equipos/:id/editar', (req, res) => {
+app.post('/api/equipos/:id/editar', protegerDocente, (req, res) => {
   try {
     const presupuesto = Number(req.body.presupuesto);
     const reputacion = Number(req.body.reputacion);
     if (!Number.isFinite(presupuesto) || !Number.isFinite(reputacion)) {
       throw new Error('Presupuesto y reputación deben ser números.');
     }
-    const equipo = q.editarEquipo(Number(req.params.id), { presupuesto, reputacion });
+    q.editarEquipo(Number(req.params.id), { presupuesto, reputacion });
+    if (req.body.password) {
+      if (String(req.body.password).length < 4) {
+        throw new Error('La contraseña del equipo debe tener al menos 4 caracteres.');
+      }
+      q.cambiarPassword(Number(req.params.id), bcrypt.hashSync(String(req.body.password), 10));
+    }
     emitirEstado();
-    res.json({ ok: true, equipo });
+    res.json({ ok: true, equipo: equipoPublico(q.getEquipo(Number(req.params.id))) });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/api/equipos/:id/password', protegerDocente, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const password = generarPasswordEquipo();
+    q.cambiarPassword(id, await bcrypt.hash(password, 10));
+    res.json({ ok: true, password });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
 app.post('/api/reset', (req, res) => {
+  if (!protegerDocente(req, res, () => {})) return;
   q.reiniciarPartida();
   emitirEstado();
   res.json({ ok: true });
 });
 
 app.post('/api/borrar-todo', (req, res) => {
+  if (!protegerDocente(req, res, () => {})) return;
   if (req.body.confirmacion !== 'BORRAR') {
     res.status(400).json({ error: 'Hay que escribir la palabra BORRAR para confirmar.' });
     return;
@@ -115,6 +228,7 @@ app.post('/api/borrar-todo', (req, res) => {
 });
 
 app.post('/api/sesion/duracion', (req, res) => {
+  if (!protegerDocente(req, res, () => {})) return;
   try {
     const sesion = sesionMod.setDuracionRonda(req.body.segundos);
     res.json({ ok: true, sesion });
@@ -124,6 +238,7 @@ app.post('/api/sesion/duracion', (req, res) => {
 });
 
 app.post('/api/sesion/sortear', (req, res) => {
+  if (!protegerDocente(req, res, () => {})) return;
   try {
     const sesion = sesionMod.sortearYComenzar();
     emitirEstado();
@@ -134,6 +249,7 @@ app.post('/api/sesion/sortear', (req, res) => {
 });
 
 app.post('/api/sesion/siguiente-ronda', (req, res) => {
+  if (!protegerDocente(req, res, () => {})) return;
   try {
     const sesion = sesionMod.siguienteRonda();
     emitirEstado();
@@ -144,6 +260,7 @@ app.post('/api/sesion/siguiente-ronda', (req, res) => {
 });
 
 app.post('/api/sesion/cerrar-ronda', (req, res) => {
+  if (!protegerDocente(req, res, () => {})) return;
   try {
     const resultado = sesionMod.cerrarRonda();
     emitirEstado();
@@ -154,6 +271,7 @@ app.post('/api/sesion/cerrar-ronda', (req, res) => {
 });
 
 app.post('/api/sesion/confirmar', (req, res) => {
+  if (!protegerDocente(req, res, () => {})) return;
   try {
     const resultado = sesionMod.confirmarResultados(req.body.ajustes || []);
     emitirEstado();
@@ -167,11 +285,31 @@ app.post('/api/sesion/confirmar', (req, res) => {
 });
 
 app.get('/equipo', (req, res) => {
-  res.render('equipo-selector', { equipos: q.listEquipos() });
+  res.render('equipo-selector', { equipos: q.listEquipos(), error: null });
+});
+
+app.post('/equipo/login', async (req, res) => {
+  const id = Number(req.body.equipo_id);
+  const equipo = q.getEquipo(id);
+  const password = String(req.body.password || '');
+  const correcto = equipo && equipo.password_hash && await bcrypt.compare(password, equipo.password_hash);
+  if (!correcto) {
+    res.status(401).render('equipo-selector', {
+      equipos: q.listEquipos(),
+      error: 'Equipo o contraseña incorrectos.',
+    });
+    return;
+  }
+  req.session.equipoId = id;
+  req.session.save(() => res.redirect(`/equipo/${id}`));
 });
 
 app.get('/equipo/:id', (req, res) => {
   const id = Number(req.params.id);
+  if (!esEquipoAutenticado(req, id)) {
+    res.redirect('/equipo');
+    return;
+  }
   const existe = q.getEquipo(id);
   if (!existe) {
     res.status(404).send('Equipo no encontrado.');
@@ -195,6 +333,10 @@ app.get('/equipo/:id', (req, res) => {
 // encuentra mirando la pestaña de Red, no leyendo la interfaz.
 app.get('/api/equipos/:id/catalogo', (req, res) => {
   const id = Number(req.params.id);
+  if (!esEquipoAutenticado(req, id)) {
+    rechazarNoAutorizado(req, res);
+    return;
+  }
   const equipo = q.getEquipo(id);
   if (!equipo) {
     res.status(404).json({ error: 'Equipo no encontrado.' });
@@ -212,6 +354,10 @@ app.get('/api/equipos/:id/catalogo', (req, res) => {
 });
 
 app.post('/api/equipos/:id/comprar', (req, res) => {
+  if (!esEquipoAutenticado(req, req.params.id)) {
+    rechazarNoAutorizado(req, res);
+    return;
+  }
   try {
     const { equipo, pista } = q.usarHerramienta(Number(req.params.id), req.body.herramienta_id);
     emitirEstado();
@@ -225,6 +371,10 @@ app.post('/api/equipos/:id/comprar', (req, res) => {
 });
 
 app.post('/api/equipos/:id/reaccionar', (req, res) => {
+  if (!esEquipoAutenticado(req, req.params.id)) {
+    rechazarNoAutorizado(req, res);
+    return;
+  }
   try {
     const equipo = sesionMod.reaccionar(Number(req.params.id));
     emitirEstado();

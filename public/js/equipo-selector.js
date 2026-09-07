@@ -1,5 +1,4 @@
 (function () {
-  const socket = io();
   const contenedor = document.getElementById('equipo-selector');
   const datosIniciales = JSON.parse(document.getElementById('equipos-iniciales').textContent);
 
@@ -11,13 +10,17 @@
 
   function render(equipos) {
     contenedor.innerHTML = equipos
-      .map((eq) => `<a href="/equipo/${eq.id}">${escapeHtml(eq.nombre)}</a>`)
+      .map((eq) => `
+        <form action="/equipo/login" method="post" class="formulario">
+          <input type="hidden" name="equipo_id" value="${eq.id}">
+          <strong>${escapeHtml(eq.nombre)}</strong>
+          <label>Contraseña
+            <input type="password" name="password" required>
+          </label>
+          <button type="submit">Ingresar</button>
+        </form>`)
       .join('');
   }
-
-  socket.on('estado:actualizado', (data) => {
-    render(data.equipos);
-  });
 
   render(datosIniciales);
 })();

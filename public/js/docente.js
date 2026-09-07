@@ -3,6 +3,7 @@
   const tbody = document.querySelector('#tabla-equipos tbody');
   const panelSesion = document.getElementById('panel-sesion');
   const mensajeEl = document.getElementById('mensaje');
+  const credencialEl = document.getElementById('credencial-generada');
   const datosIniciales = JSON.parse(document.getElementById('equipos-iniciales').textContent);
   const sesionInicial = JSON.parse(document.getElementById('sesion-inicial').textContent);
   const casosInfo = JSON.parse(document.getElementById('casos-info').textContent);
@@ -33,6 +34,7 @@
         <td>${escapeHtml(eq.nombre)}</td>
         <td><input type="number" class="input-presupuesto" data-id="${eq.id}" value="${eq.presupuesto}"></td>
         <td><input type="number" class="input-reputacion" data-id="${eq.id}" value="${eq.reputacion}"></td>
+        <td><button class="btn-generar-password" data-id="${eq.id}" type="button">Generar nueva contraseña</button></td>
         <td><button class="btn-guardar" data-id="${eq.id}" type="button">Guardar</button></td>
       `;
       tbody.appendChild(tr);
@@ -40,6 +42,18 @@
   }
 
   tbody.addEventListener('click', async (e) => {
+    if (e.target.classList.contains('btn-generar-password')) {
+      const id = e.target.dataset.id;
+      const res = await fetch(`/api/equipos/${id}/password`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        mostrarMensaje(data.error || 'No se pudo generar la contraseña.', 'error');
+        return;
+      }
+      credencialEl.hidden = false;
+      credencialEl.textContent = `Nueva contraseña para el equipo: ${data.password}. Anotala o compartila ahora; no se va a poder volver a mostrar.`;
+      return;
+    }
     if (!e.target.classList.contains('btn-guardar')) return;
     const id = e.target.dataset.id;
     const presupuesto = tbody.querySelector(`.input-presupuesto[data-id="${id}"]`).value;
@@ -71,6 +85,8 @@
       return;
     }
     form.reset();
+    credencialEl.hidden = false;
+    credencialEl.textContent = `Contraseña para ${data.equipo.nombre}: ${data.password}. Anotala o compartila ahora; no se va a poder volver a mostrar.`;
     mostrarMensaje('Equipo creado.', 'exito');
   });
 

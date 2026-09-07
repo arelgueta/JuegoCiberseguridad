@@ -11,9 +11,15 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS equipos (
     id INTEGER PRIMARY KEY,
     nombre TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL DEFAULT '',
     presupuesto INTEGER NOT NULL DEFAULT 30,
     reputacion INTEGER NOT NULL DEFAULT 20,
     creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS configuracion (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    docente_password_hash TEXT
   );
 
   CREATE TABLE IF NOT EXISTS herramientas (
@@ -93,6 +99,13 @@ db.exec(`
     es_pista INTEGER NOT NULL DEFAULT 0
   );
 `);
+
+db.prepare('INSERT OR IGNORE INTO configuracion (id, docente_password_hash) VALUES (1, NULL)').run();
+
+const columnasEquipos = db.prepare('PRAGMA table_info(equipos)').all().map((c) => c.name);
+if (!columnasEquipos.includes('password_hash')) {
+  db.exec("ALTER TABLE equipos ADD COLUMN password_hash TEXT NOT NULL DEFAULT ''");
+}
 
 const columnasHerramientas = db.prepare("PRAGMA table_info(herramientas)").all().map((c) => c.name);
 if (!columnasHerramientas.includes('requiere')) {
