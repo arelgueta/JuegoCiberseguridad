@@ -36,3 +36,4 @@ Los datos se guardan en `./data/brecha.sqlite`, que persiste aunque se reinicie 
 npm install
 npm start
 ```
+EXTRA: http://Svdor:3000/api/equipos/1/catalogo?completo=1
