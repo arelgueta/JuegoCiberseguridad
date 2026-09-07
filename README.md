@@ -37,3 +37,8 @@ npm install
 npm start
 ```
 EXTRA: http://Svdor:3000/api/equipos/1/catalogo?completo=1
+
+Nt
+lv
+adc
+$2
