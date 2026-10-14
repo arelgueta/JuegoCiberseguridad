@@ -89,9 +89,12 @@
     } else if (yaReacciono) {
       accionHtml = '<p class="cartel-cubierto">Ya reaccionaste en esta ronda.</p>';
     } else {
-      const alcanza = equipo.presupuesto >= caso.costoReactiva;
+      // Mismo descuento que costoReactivaPara() en src/sesion.js.
+      const descuento = equipo.herramientas.includes('plan-respuesta-incidentes') ? 1 : 0;
+      const costo = Math.max(0, caso.costoReactiva - descuento);
+      const alcanza = equipo.presupuesto >= costo;
       accionHtml = `<button id="btn-reaccionar" type="button" ${alcanza ? '' : 'disabled'}>${
-        alcanza ? `Reaccionar (cuesta ${caso.costoReactiva})` : 'Presupuesto insuficiente para reaccionar'
+        alcanza ? `Reaccionar (cuesta ${costo})` : 'Presupuesto insuficiente para reaccionar'
       }</button>`;
     }
 
