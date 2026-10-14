@@ -4,3 +4,4 @@ data/*.sqlite
 data/*.sqlite-journal
 npm-debug.log*
 .DS_Store
+.claude
