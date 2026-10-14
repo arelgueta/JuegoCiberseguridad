@@ -78,18 +78,15 @@ function emitirEstado() {
   io.emit('estado:actualizado', estadoPublico());
 }
 
+// La sala privada del equipo se asigna en cada conexión a partir de la sesión, así un
+// celular que se reconecta (WiFi intermitente, pantalla bloqueada) la recupera solo.
 io.on('connection', (socket) => {
-  socket.emit('estado:actualizado', estadoPublico());
-
-  socket.on('equipo:unirse', (equipoId) => {
-    const id = Number(socket.request.session && socket.request.session.equipoId);
-    const equipo = q.getEquipo(id);
-    if (!equipo) {
-      return;
-    }
+  const id = Number(socket.request.session && socket.request.session.equipoId);
+  if (q.getEquipo(id)) {
     socket.data.equipoId = id;
     socket.join(`equipo:${id}`);
-  });
+  }
+  socket.emit('estado:actualizado', estadoPublico());
 });
 
 // Cierra automáticamente la ronda activa si se venció el cronómetro (server-side,

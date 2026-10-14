@@ -128,6 +128,13 @@ function tiene3BDeCategoria(equipoId, categoria) {
     .get(equipoId, categoria);
 }
 
+// plan-respuesta-incidentes (SPEC.md, SPEC8.md): reduce en 1 el costo de emergencia de
+// cualquier categoría, sin bajar de 0.
+function costoReactivaPara(equipoId, caso) {
+  const descuento = tieneHerramienta(equipoId, 'plan-respuesta-incidentes') ? 1 : 0;
+  return Math.max(0, caso.costo_reactiva - descuento);
+}
+
 function reacciono(equipoId, rondaNumero) {
   return !!db
     .prepare('SELECT 1 FROM reacciones WHERE equipo_id = ? AND ronda_numero = ?')
@@ -305,15 +312,16 @@ function reaccionar(equipoId) {
   if (reacciono(equipoId, sesion.ronda_numero)) {
     throw new Error('El equipo ya reaccionó en esta ronda.');
   }
-  if (equipo.presupuesto < caso.costo_reactiva) {
+  const costo = costoReactivaPara(equipoId, caso);
+  if (equipo.presupuesto < costo) {
     throw new Error('Presupuesto insuficiente para reaccionar.');
   }
   const aplicar = db.transaction(() => {
-    db.prepare('UPDATE equipos SET presupuesto = presupuesto - ? WHERE id = ?').run(caso.costo_reactiva, equipoId);
+    db.prepare('UPDATE equipos SET presupuesto = presupuesto - ? WHERE id = ?').run(costo, equipoId);
     db.prepare('INSERT INTO reacciones (equipo_id, ronda_numero, costo_pagado) VALUES (?, ?, ?)').run(
       equipoId,
       sesion.ronda_numero,
-      caso.costo_reactiva
+      costo
     );
   });
   aplicar();
