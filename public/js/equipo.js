@@ -17,8 +17,6 @@
   let sesionActual = JSON.parse(document.getElementById('sesion-inicial').textContent);
   let catalogoPorId = new Map();
 
-  socket.emit('equipo:unirse', equipoId);
-
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, (c) => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
